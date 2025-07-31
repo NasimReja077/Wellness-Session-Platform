@@ -1,17 +1,17 @@
 import { body, param, query, validationResult } from 'express-validator';
 
 // Validation middleware to handle errors
-export const validate = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      success: false,
-      message: 'Validation failed',
-      errors: errors.array()
-    });
-  }
-  next();
-};
+// export const validate = (req, res, next) => {
+//   const errors = validationResult(req);
+//   if (!errors.isEmpty()) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'Validation failed',
+//       errors: errors.array()
+//     });
+//   }
+//   next();
+// };
 
 // User validation rules
 export const userValidation = {
