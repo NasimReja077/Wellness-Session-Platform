@@ -1,21 +1,45 @@
-import rateLimit from 'express-rate-limit'
+import rateLimit from 'express-rate-limit';
 
+// Helper function for consistent error responses
+const createRateLimitError = (message, retryAfter) => ({
+  success: false,
+  message,
+  retryAfter,
+});
+
+// Auth rate limiter
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs for auth routes
-  message: {
-    error: 'Too many authentication attempts, please try again later.',
-  },
+  max: 5,
+  message: async (req) => createRateLimitError(
+    'Too many authentication attempts, please try again later.',
+    Math.round(req.rateLimit.resetTime / 1000)
+  ),
   standardHeaders: true,
   legacyHeaders: false,
-})
+});
 
+// General API rate limiter
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-  },
+  max: 100,
+  message: async (req) => createRateLimitError(
+    'Too many requests from this IP, please try again later.',
+    Math.round(req.rateLimit.resetTime / 1000)
+  ),
   standardHeaders: true,
   legacyHeaders: false,
-})
+});
+
+// Session creation rate limiter
+export const createSessionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: async (req) => createRateLimitError(
+    'Too many session creation requests, please try again later.',
+    Math.round(req.rateLimit.resetTime / 1000)
+  ),
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+

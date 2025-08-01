@@ -4,6 +4,11 @@ import express from 'express';
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
+import compression from 'compression';
+import morgan from 'morgan';
+
+import { errorHandler } from './middlewares/error.middleware.js';
+import routes from './routes/index.routes.js';
 
 const app = express(); 
 
@@ -24,6 +29,17 @@ app.use(express.static("public"));
 
 app.use(cookieParser()); // Cookie parser
 
+app.use(compression())
+
+// app.use('/api/', rateLimiter);
+
+
+// Logging middleware
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+} else {
+  app.use(morgan('combined'))
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -35,5 +51,10 @@ app.get('/health', (req, res) => {
   });
 });
 
+// API routes
+app.use('/api', routes)
 
-export { app }
+// Global error handler
+app.use(errorHandler);
+
+export { app };

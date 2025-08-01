@@ -127,8 +127,6 @@ const userSchema = new mongoose.Schema({
 );
 
 // Indexes for better performance
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
 userSchema.index({ 'profile.fitnessGoals': 1 });
 userSchema.index({ createdAt: -1 });
 

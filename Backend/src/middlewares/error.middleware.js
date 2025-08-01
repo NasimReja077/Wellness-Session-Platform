@@ -1,15 +1,11 @@
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../utils/ApiError.js";
 
 export const errorHandler = (err, req, res, next) => {
-  let error = err
+  let error = err;
 
-  // Handle Mongoose validation errors
-  if (err.name === 'ValidationError') {
-    const errorMessages = Object.values(err.errors).map(val => ({
-      field: val.path,
-      message: val.message
-    }))
-    error = new ApiError(400, 'Validation Error', errorMessages)
+   // Handle Mongoose cast errors (invalid ObjectId)
+   if (err.name === 'CastError') {
+    error = new ApiError(400, `Invalid ${err.path}: ${err.value}`);
   }
 
   // Handle Mongoose duplicate key errors
@@ -19,25 +15,30 @@ export const errorHandler = (err, req, res, next) => {
     error = new ApiError(400, `${field} '${value}' already exists`)
   }
 
-  // Handle Mongoose cast errors
-  if (err.name === 'CastError') {
-    error = new ApiError(400, `Invalid ${err.path}: ${err.value}`)
+  // Handle Mongoose validation errors
+  else if (err.name === 'ValidationError') {
+    const errorMessages = Object.values(err.errors).map(val => ({
+      field: val.path,
+      message: val.message
+    }));
+    error = new ApiError(400, 'Validation Error', errorMessages);
   }
 
   // Handle JWT errors
-  if (err.name === 'JsonWebTokenError') {
+  else if (err.name === 'JsonWebTokenError') {
     error = new ApiError(401, 'Invalid token')
   }
 
-  if (err.name === 'TokenExpiredError') {
+  else if (err.name === 'TokenExpiredError') {
     error = new ApiError(401, 'Token expired')
   }
 
   // If it's not an ApiError, convert it to one
   if (!(error instanceof ApiError)) {
-    const statusCode = error.statusCode || 500
-    const message = error.message || 'Internal Server Error'
-    error = new ApiError(statusCode, message)
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+    const stack = err.stack || '';
+    error = new ApiError(statusCode, message, [], stack);
   }
 
   // Log error in development
@@ -50,5 +51,14 @@ export const errorHandler = (err, req, res, next) => {
     message: error.message,
     errors: error.errors || [],
     ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-  })
-}
+  });
+
+  // // File upload errors
+  // // ✅ Handle Multer (file upload) errors
+  // else if (err.code === 'LIMIT_FILE_SIZE') {
+  //   error = new ApiError(400, 'File too large');
+  // } else if (err.name === 'MulterError') {
+  //   error = new ApiError(400, err.message);
+  // }
+
+};
