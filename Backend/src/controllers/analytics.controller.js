@@ -82,7 +82,7 @@ export const getDashboardAnalytics = asyncHandler(async (req, res) => {
 
 // Mark session as completed
 export const completeSession = asyncHandler(async (req, res) => {
-  const { sessionId, durationCompleted, caloriesBurned, rating, notes } = req.body;
+  const { sessionId, durationCompleted, caloriesBurned, notes } = req.body; // Removed rating
   const userId = req.user._id;
 
   // Check if session exists
@@ -93,12 +93,11 @@ export const completeSession = asyncHandler(async (req, res) => {
 
   // Create completion record
   const completion = await SessionTracking.create({
-    user: userId, // Changed from user_id
-    session: sessionId, // Changed from session_id
+    user: userId,
+    session: sessionId,
     duration_completed: durationCompleted,
     calories_burned: caloriesBurned || 0,
     notes: notes || ''
-    // rating is not in the schema, remove or add to SessionTracking if needed
   });
 
   // Update user stats
@@ -122,7 +121,7 @@ export const completeSession = asyncHandler(async (req, res) => {
     user.stats.streak_days = 1;
   }
 
-  await user.save({ validateBeforeSave: false }); // Skip validation if needed
+  await user.save({ validateBeforeSave: false });
 
   res.status(201).json(
     new ApiResponse(201, completion, 'Session completed successfully')

@@ -186,18 +186,19 @@ export const commentValidation = {
 // Progress validation rules
 export const sessionTrackingValidation = {
   create: [
-    body('session')
+    body('sessionId') // Changed from 'session' to 'sessionId'
       .isMongoId()
       .withMessage('Invalid session ID'),
-    body('duration_completed')
-      .isInt({ min: 0 })
-      .withMessage('Duration completed must be a positive number'),
-    body('calories_burned')
+    body('durationCompleted') // Changed from 'duration_completed' to 'durationCompleted'
+      .isInt({ min: 1 }) // Changed to min: 1 to enforce positive duration
+      .withMessage('Duration completed must be a positive integer'),
+    body('caloriesBurned') // Changed from 'calories_burned' to 'caloriesBurned'
       .optional()
       .isInt({ min: 0 })
-      .withMessage('Calories burned must be a positive number')
+      .withMessage('Calories burned must be a non-negative integer')
   ]
 };
+
 
 // Query validation rules
 export const queryValidation = {
