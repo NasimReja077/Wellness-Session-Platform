@@ -148,19 +148,38 @@ export const sessionValidation = {
       .optional()
       .isBoolean()
       .withMessage('isPublished must be true or false')
+  ],
+  publish: [
+    body('sessionId')
+      .isMongoId()
+      .withMessage('Invalid session ID')
   ]
 };
 
 // Comment validation rules
 export const commentValidation = {
   create: [
-    body('content')
-      .trim()
-      .isLength({ min: 1, max: 500 })
-      .withMessage('Comment content is required and cannot exceed 500 characters'),
+
     param('sessionId')
       .isMongoId()
-      .withMessage('Invalid session ID')
+      .withMessage('Invalid session ID'),
+    body('content')
+      .trim()
+      .notEmpty()
+      .withMessage('Content is required')
+      .isLength({ max: 500 })
+      .withMessage('Content must be less than 500 characters'),
+    body('parentCommentId')
+      .optional()
+      .isMongoId()
+      .withMessage('Invalid parent comment ID'),
+    body('durationCompleted')
+      .isInt({ min: 1 })
+      .withMessage('Duration completed must be a positive integer'),
+    body('caloriesBurned')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Calories burned must be a non-negative integer'),
   ]
 };
 
@@ -189,8 +208,8 @@ export const queryValidation = {
       .withMessage('Page must be a positive integer'),
     query('limit')
       .optional()
-      .isInt({ min: 1, max: 1000 })
-      .withMessage('Limit must be between 1 and 1000')
+      .isInt({ min: 1, max: 12 })
+      .withMessage('Limit must be between 1 and 12')
   ],
   sessions: [
     query('category')
@@ -211,7 +230,7 @@ export const queryValidation = {
       .withMessage('Invalid difficulty level'),
     query('sort')
       .optional()
-      .isIn(['newest', 'oldest', 'popular', 'rating'])
+      .isIn(['newest', 'oldest', 'popular'])
       .withMessage('Invalid sort option')
   ]
 };

@@ -94,11 +94,13 @@ const userSchema = new mongoose.Schema({
   },
   followers: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      default: []
     }],
     following: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      default: []
     }],
     stats: {
       total_sessions: { type: Number, default: 0 },
@@ -132,15 +134,17 @@ userSchema.index({ createdAt: -1 });
 
 // Virtual fields
 userSchema.virtual('followersCount').get(function() {
-  return this.followers.length;
+  return this.followers ? this.followers.length : 0;
 });
 
 userSchema.virtual('followingCount').get(function() {
-  return this.following.length;
+  return this.following ? this.following.length : 0;
 });
 
 userSchema.virtual('fullName').get(function() {
-  return `${this.profile.firstName || ''} ${this.profile.lastName || ''}`.trim();
+  const firstName = this.profile?.firstName || '';
+  const lastName = this.profile?.lastName || '';
+  return `${firstName} ${lastName}`.trim();
 });
 
 // Pre-save: hash password if modified

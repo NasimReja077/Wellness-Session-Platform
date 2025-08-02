@@ -133,17 +133,18 @@ const sessionSchema = new mongoose.Schema({
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
-})
+});
 
 // Index for better query performance
-sessionSchema.index({ title: 'text', tags: 1 });
+// sessionSchema.index({ title: 'text' });
+sessionSchema.index({ title: 'text', description: 'text' });
+sessionSchema.index({ tags: 1 });
 sessionSchema.index({ 'content.target_muscles': 1 });
 sessionSchema.index({ createdBy: 1, status: 1 })
 sessionSchema.index({ category: 1, status: 1 })
-sessionSchema.index({ tags: 1 })
 sessionSchema.index({ createdAt: -1 })
 sessionSchema.index({ difficulty: 1 });
-sessionSchema.index({ views_count: -1 });
+sessionSchema.index({ 'engagement.views_count': -1 });
 
 
 // Virtual fields
@@ -162,15 +163,12 @@ sessionSchema.virtual('category_details', {
   justOne: true
 });
 
-// Check if session is published
-sessionSchema.virtual('isPublished').get(function () {
-  return this.status === 'published';
-});
-
-
-// Pre-save middleware
-// Normalize tags before saving
+// Pre-save middleware: Sync isPublished with status and set published_at
 sessionSchema.pre('save', function (next) {
+  if (this.isModified('status')) {
+    this.isPublished = this.status === 'published';
+    this.published_at = this.status === 'published' ? new Date() : null;
+  }
   if (this.tags && Array.isArray(this.tags)) {
     this.tags = this.tags.map((tag) => tag.toLowerCase().trim());
   }
@@ -178,11 +176,12 @@ sessionSchema.pre('save', function (next) {
 });
 
 // Method to increment view count
-// Increment views instance method
-sessionSchema.methods.incrementViews = function () {
-  this.engagement.views++;
+sessionSchema.methods.incrementViews = async function (userId) {
+  if (userId && !this.engagement.views.includes(userId)) {
+    this.engagement.views.push(userId);
+    this.engagement.views_count += 1;
+  }
   return this.save();
 };
-
 
 export const Session = mongoose.model('Session', sessionSchema);

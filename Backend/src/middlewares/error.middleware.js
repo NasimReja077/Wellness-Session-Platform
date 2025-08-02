@@ -3,16 +3,26 @@ import { ApiError } from "../utils/ApiError.js";
 export const errorHandler = (err, req, res, next) => {
   let error = err;
 
-   // Handle Mongoose cast errors (invalid ObjectId)
-   if (err.name === 'CastError') {
+  // Log the full error context
+  console.error('Error Handler Triggered:', {
+    message: err.message,
+    name: err.name,
+    stack: err.stack,
+    method: req.method,
+    url: req.url,
+    body: req.body
+  });
+
+  // Handle Mongoose cast errors (invalid ObjectId)
+  if (err.name === 'CastError') {
     error = new ApiError(400, `Invalid ${err.path}: ${err.value}`);
   }
 
   // Handle Mongoose duplicate key errors
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0]
-    const value = err.keyValue[field]
-    error = new ApiError(400, `${field} '${value}' already exists`)
+    const field = Object.keys(err.keyValue)[0];
+    const value = err.keyValue[field];
+    error = new ApiError(400, `${field} '${value}' already exists`);
   }
 
   // Handle Mongoose validation errors
@@ -26,11 +36,9 @@ export const errorHandler = (err, req, res, next) => {
 
   // Handle JWT errors
   else if (err.name === 'JsonWebTokenError') {
-    error = new ApiError(401, 'Invalid token')
-  }
-
-  else if (err.name === 'TokenExpiredError') {
-    error = new ApiError(401, 'Token expired')
+    error = new ApiError(401, 'Invalid token');
+  } else if (err.name === 'TokenExpiredError') {
+    error = new ApiError(401, 'Token expired');
   }
 
   // If it's not an ApiError, convert it to one
@@ -43,7 +51,7 @@ export const errorHandler = (err, req, res, next) => {
 
   // Log error in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('Error:', error)
+    console.error('Error:', error);
   }
 
   res.status(error.statusCode).json({
@@ -52,13 +60,13 @@ export const errorHandler = (err, req, res, next) => {
     errors: error.errors || [],
     ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
   });
+};
 
-  // // File upload errors
+
+ // // File upload errors
   // // ✅ Handle Multer (file upload) errors
   // else if (err.code === 'LIMIT_FILE_SIZE') {
   //   error = new ApiError(400, 'File too large');
   // } else if (err.name === 'MulterError') {
   //   error = new ApiError(400, err.message);
   // }
-
-};

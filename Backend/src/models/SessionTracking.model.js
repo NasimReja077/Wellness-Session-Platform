@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 const moodBeforeEnum = ['excited', 'motivated', 'neutral', 'tired', 'stressed', 'anxious'];
 const moodAfterEnum = ['energized', 'relaxed', 'accomplished', 'neutral', 'tired', 'frustrated'];
 
+
 const sessionTrackingSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
