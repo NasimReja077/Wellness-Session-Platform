@@ -15,7 +15,7 @@ const app = express();
 app.use(helmet()); // Security middleware
 
 app.use(cors({ // Enable CORS for all origins (frontend URL in production)
-     origin: process.env.CORS_ORIGIN,
+     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
      credentials: true
 }));
 
