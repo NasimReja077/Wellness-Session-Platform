@@ -5,9 +5,36 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { useSessionStore } from '../store/sessionStore.js';
-import { FiSave, FiSend, FiPlus, FiTrash2, FiLoader, FiX } from 'react-icons/fi';
+import { FiSave, FiSend, FiPlus, FiTrash2, FiLoader, FiX, FiTag } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import toast from 'react-hot-toast';
+
+// Reusable InputField Component
+const InputField = ({ label, name, register, errors, type = 'text', placeholder, className, ...props }) => (
+  <div className="relative">
+    <label htmlFor={name} className="block text-sm font-medium text-gray-800 mb-1.5">
+      {label}
+    </label>
+    <div className="relative">
+      <input
+        type={type}
+        id={name}
+        {...register(name, props.validation)}
+        className={`w-full px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200 ${className} ${
+          errors[name] ? 'border-red-500 focus:ring-red-500' : ''
+        }`}
+        placeholder={placeholder}
+        aria-label={label}
+      />
+      {errors[name] && (
+        <span className="absolute right-3 top-3 text-red-600">
+          <FiX className="w-4 h-4" />
+        </span>
+      )}
+    </div>
+    {errors[name] && <p className="mt-1 text-sm text-red-600">{errors[name].message}</p>}
+  </div>
+);
 
 const SessionEditor = () => {
   const { id } = useParams();
@@ -21,7 +48,7 @@ const SessionEditor = () => {
     fetchSessionById,
     currentSession,
     loading,
-    autoSaveStatus
+    autoSaveStatus,
   } = useSessionStore();
 
   const [autoSaveTimer, setAutoSaveTimer] = useState(null);
@@ -34,7 +61,7 @@ const SessionEditor = () => {
     watch,
     setValue,
     control,
-    formState: { errors, isDirty }
+    formState: { errors, isDirty },
   } = useForm({
     defaultValues: {
       title: '',
@@ -57,40 +84,37 @@ const SessionEditor = () => {
           fat: 0,
           fiber: 0,
           sugar: 0,
-          sodium: 0
-        }
-      }
-    }
+          sodium: 0,
+        },
+      },
+    },
   });
 
   const {
     fields: instructionFields,
     append: appendInstruction,
-    remove: removeInstruction
+    remove: removeInstruction,
   } = useFieldArray({
     control,
-    name: 'content.instructions'
+    name: 'content.instructions',
   });
 
   const {
     fields: equipmentFields,
     append: appendEquipment,
-    remove: removeEquipment
+    remove: removeEquipment,
   } = useFieldArray({
     control,
-    name: 'content.equipment_needed'
+    name: 'content.equipment_needed',
   });
 
   const watchedFields = watch();
 
   useEffect(() => {
     fetchCategories();
-
-    // If editing existing session, fetch it
     if (id) {
       fetchSessionById(id).then((session) => {
         if (session) {
-          // Populate form with existing data
           Object.keys(session).forEach((key) => {
             if (key !== '_id' && key !== 'createdAt' && key !== 'updatedAt') {
               setValue(key, session[key]);
@@ -101,32 +125,21 @@ const SessionEditor = () => {
     }
   }, [id]);
 
-  // Auto-save functionality
   useEffect(() => {
     if (isDirty && watchedFields.title) {
-      // Clear existing timer
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
-
-      // Set new timer for auto-save
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
       const timer = setTimeout(() => {
         handleAutoSave();
-      }, 5000); // Auto-save after 5 seconds of inactivity
-
+      }, 5000);
       setAutoSaveTimer(timer);
     }
-
     return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
     };
   }, [watchedFields]);
 
   const handleAutoSave = async () => {
     const formData = watchedFields;
-    
     if (!formData.title?.trim()) return;
 
     try {
@@ -135,17 +148,29 @@ const SessionEditor = () => {
         result = await updateDraftSession({ ...formData, sessionId: draftId });
       } else {
         result = await createDraftSession(formData);
-        if (result?._id) {
-          setDraftId(result._id);
-        }
+        if (result?._id) setDraftId(result._id);
       }
-      
       if (result) {
         setLastSaved(new Date());
-        toast.success('Draft auto-saved', { duration: 2000 });
+        toast.success('Draft auto-saved', {
+          style: {
+            background: '#059669',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '12px',
+          },
+        });
       }
     } catch (error) {
       console.error('Auto-save failed:', error);
+      toast.error('Auto-save failed', {
+        style: {
+          background: '#DC2626',
+          color: '#fff',
+          borderRadius: '8px',
+          padding: '12px',
+        },
+      });
     }
   };
 
@@ -156,25 +181,34 @@ const SessionEditor = () => {
         result = await updateDraftSession({ ...data, sessionId: draftId });
       } else {
         result = await createDraftSession(data);
-        if (result?._id) {
-          setDraftId(result._id);
-        }
+        if (result?._id) setDraftId(result._id);
       }
-      
       if (result) {
         setLastSaved(new Date());
-        toast.success('Draft saved successfully!');
+        toast.success('Draft saved successfully!', {
+          style: {
+            background: '#059669',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '12px',
+          },
+        });
       }
     } catch (error) {
-      toast.error('Failed to save draft');
+      toast.error('Failed to save draft', {
+        style: {
+          background: '#DC2626',
+          color: '#fff',
+          borderRadius: '8px',
+          padding: '12px',
+        },
+      });
     }
   };
 
   const onPublish = async (data) => {
     try {
-      // First save as draft if not already saved
       let sessionIdToPublish = draftId;
-      
       if (!sessionIdToPublish) {
         const draftResult = await createDraftSession(data);
         if (draftResult?._id) {
@@ -183,17 +217,29 @@ const SessionEditor = () => {
           throw new Error('Failed to create draft');
         }
       } else {
-        // Update existing draft
         await updateDraftSession({ ...data, sessionId: sessionIdToPublish });
       }
-
-      // Then publish
       const publishResult = await publishSession(sessionIdToPublish);
       if (publishResult) {
         navigate(`/sessions/${publishResult._id}`);
+        toast.success('Session published successfully!', {
+          style: {
+            background: '#059669',
+            color: '#fff',
+            borderRadius: '8px',
+            padding: '12px',
+          },
+        });
       }
     } catch (error) {
-      toast.error('Failed to publish session');
+      toast.error('Failed to publish session', {
+        style: {
+          background: '#DC2626',
+          color: '#fff',
+          borderRadius: '8px',
+          padding: '12px',
+        },
+      });
     }
   };
 
@@ -209,62 +255,67 @@ const SessionEditor = () => {
   };
 
   const removeTag = (tagToRemove) => {
-    setValue('tags', watchedFields.tags?.filter(tag => tag !== tagToRemove) || []);
+    setValue('tags', watchedFields.tags?.filter((tag) => tag !== tagToRemove) || []);
   };
 
   const targetMuscleOptions = [
-    'core', 'legs', 'arms', 'back', 'chest', 'shoulders', 'glutes', 'full_body'
+    'core',
+    'legs',
+    'arms',
+    'back',
+    'chest',
+    'shoulders',
+    'glutes',
+    'full_body',
   ];
 
   const toggleTargetMuscle = (muscle) => {
     const currentMuscles = watchedFields.content?.target_muscles || [];
     const updatedMuscles = currentMuscles.includes(muscle)
-      ? currentMuscles.filter(m => m !== muscle)
+      ? currentMuscles.filter((m) => m !== muscle)
       : [...currentMuscles, muscle];
-    
     setValue('content.target_muscles', updatedMuscles);
   };
 
   if (loading && id) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
         <LoadingSpinner size="lg" message="Loading session..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          transition={{ duration: 0.5 }}
+          className="mb-10"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {id ? 'Edit Session' : 'Create New Session'}
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
                 Share your wellness expertise with the community
               </p>
             </div>
-
-            {/* Auto-save status */}
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-600 flex items-center gap-2">
               {autoSaveStatus === 'saving' && (
-                <div className="flex items-center space-x-2">
-                  <FiLoader className="animate-spin" />
+                <>
+                  <FiLoader className="animate-spin text-gray-700" />
                   <span>Saving...</span>
-                </div>
+                </>
               )}
               {lastSaved && autoSaveStatus === 'saved' && (
                 <span>Last saved: {lastSaved.toLocaleTimeString()}</span>
               )}
               {autoSaveStatus === 'error' && (
-                <span className="text-red-500">Auto-save failed</span>
+                <span className="text-red-600">Auto-save failed</span>
               )}
             </div>
           </div>
@@ -276,56 +327,44 @@ const SessionEditor = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-8"
           >
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
-            
             <div className="grid grid-cols-1 gap-6">
-              {/* Title */}
+              <InputField
+                label="Session Title *"
+                name="title"
+                register={register}
+                errors={errors}
+                placeholder="Enter your session title"
+                validation={{
+                  required: 'Title is required',
+                  minLength: { value: 3, message: 'Title must be at least 3 characters' },
+                }}
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Session Title *
-                </label>
-                <input
-                  type="text"
-                  {...register('title', {
-                    required: 'Title is required',
-                    minLength: { value: 3, message: 'Title must be at least 3 characters' }
-                  })}
-                  className={`w-full px-4 py-3 border ${
-                    errors.title ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
-                  placeholder="Enter your session title"
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-800 mb-1.5">
                   Description
                 </label>
                 <textarea
                   {...register('description')}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
                   placeholder="Describe your session..."
+                  aria-label="Description"
                 />
               </div>
-
-              {/* Category and Settings Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-800 mb-1.5">
                     Category *
                   </label>
                   <select
                     {...register('category', { required: 'Category is required' })}
-                    className={`w-full px-4 py-3 border ${
-                      errors.category ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    className={`w-full px-4 py-3 border rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200 ${
+                      errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-500'
+                    }`}
+                    aria-label="Category"
                   >
                     <option value="">Select category</option>
                     {categories.map((category) => (
@@ -338,92 +377,76 @@ const SessionEditor = () => {
                     <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
                   )}
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-800 mb-1.5">
                     Difficulty *
                   </label>
                   <select
                     {...register('difficulty')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+                    aria-label="Difficulty"
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
                     <option value="advanced">Advanced</option>
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration (minutes) *
-                  </label>
-                  <input
-                    type="number"
-                    {...register('duration', {
-                      required: 'Duration is required',
-                      min: { value: 1, message: 'Duration must be at least 1 minute' },
-                      max: { value: 300, message: 'Duration cannot exceed 300 minutes' }
-                    })}
-                    className={`w-full px-4 py-3 border ${
-                      errors.duration ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
-                    min="1"
-                    max="300"
-                  />
-                  {errors.duration && (
-                    <p className="mt-1 text-sm text-red-600">{errors.duration.message}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Media URL */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Media URL (Video/Image/Link)
-                </label>
-                <input
-                  type="url"
-                  {...register('json_file_url')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="https://example.com/video-or-image"
+                <InputField
+                  label="Duration (minutes) *"
+                  name="duration"
+                  type="number"
+                  register={register}
+                  errors={errors}
+                  placeholder="30"
+                  validation={{
+                    required: 'Duration is required',
+                    min: { value: 1, message: 'Duration must be at least 1 minute' },
+                    max: { value: 300, message: 'Duration cannot exceed 300 minutes' },
+                  }}
+                  className="w-full sm:w-32"
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                  Add a YouTube video, image, or any other content link
-                </p>
               </div>
-
-              {/* Tags */}
+              <InputField
+                label="Media URL (Video/Image/Link)"
+                name="json_file_url"
+                type="url"
+                register={register}
+                errors={errors}
+                placeholder="https://example.com/video-or-image"
+                className="w-full"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tags
-                </label>
-                <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-800 mb-1.5">Tags</label>
+                <div className="relative">
+                  <FiTag className="absolute left-3 top-3.5 text-gray-700" />
                   <input
                     type="text"
                     onKeyDown={addTag}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
                     placeholder="Type tags and press Enter or comma to add"
+                    aria-label="Tags"
                   />
-                  {watchedFields.tags && watchedFields.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {watchedFields.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(tag)}
-                            className="ml-2 text-purple-500 hover:text-purple-700"
-                          >
-                            <FiX className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
+                {watchedFields.tags && watchedFields.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {watchedFields.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-2 text-indigo-700 hover:text-indigo-900"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          <FiX className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -433,39 +456,41 @@ const SessionEditor = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-8"
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Instructions</h2>
               <button
                 type="button"
                 onClick={() => appendInstruction('')}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-all duration-200"
+                aria-label="Add instruction step"
               >
                 <FiPlus className="w-4 h-4" />
                 <span>Add Step</span>
               </button>
             </div>
-
             <div className="space-y-4">
               {instructionFields.map((field, index) => (
                 <div key={field.id} className="flex items-start space-x-4">
-                  <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-semibold mt-2">
+                  <div className="w-8 h-8 bg-indigo-700 text-white rounded-full flex items-center justify-center text-sm font-semibold mt-2">
                     {index + 1}
                   </div>
                   <div className="flex-1">
                     <textarea
                       {...register(`content.instructions.${index}`)}
                       rows={2}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
                       placeholder={`Step ${index + 1} instructions...`}
+                      aria-label={`Instruction step ${index + 1}`}
                     />
                   </div>
                   {instructionFields.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeInstruction(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-2"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 mt-2"
+                      aria-label={`Remove instruction step ${index + 1}`}
                     >
                       <FiTrash2 className="w-4 h-4" />
                     </button>
@@ -480,33 +505,35 @@ const SessionEditor = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-8"
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Equipment Needed</h2>
               <button
                 type="button"
                 onClick={() => appendEquipment('')}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-all duration-200"
+                aria-label="Add equipment"
               >
                 <FiPlus className="w-4 h-4" />
                 <span>Add Equipment</span>
               </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {equipmentFields.map((field, index) => (
                 <div key={field.id} className="flex items-center space-x-2">
                   <input
                     {...register(`content.equipment_needed.${index}`)}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="flex-1 px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
                     placeholder="Equipment name"
+                    aria-label={`Equipment ${index + 1}`}
                   />
                   {equipmentFields.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeEquipment(index)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                      aria-label={`Remove equipment ${index + 1}`}
                     >
                       <FiTrash2 className="w-4 h-4" />
                     </button>
@@ -516,108 +543,76 @@ const SessionEditor = () => {
             </div>
           </motion.div>
 
-          {/* Target Muscles & Health Info */}
+          {/* Additional Information */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl shadow-lg p-8"
+            className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-8"
           >
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Additional Information</h2>
-            
             <div className="space-y-6">
-              {/* Target Muscles */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-800 mb-3">
                   Target Muscles
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {targetMuscleOptions.map((muscle) => (
                     <button
                       key={muscle}
                       type="button"
                       onClick={() => toggleTargetMuscle(muscle)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         watchedFields.content?.target_muscles?.includes(muscle)
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-indigo-700 text-white'
+                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                       }`}
+                      aria-label={`Toggle ${muscle} muscle`}
                     >
                       {muscle.replace('_', ' ').toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Calories */}
+              <InputField
+                label="Estimated Calories Burned"
+                name="content.calories_burned"
+                type="number"
+                register={register}
+                errors={errors}
+                placeholder="0"
+                validation={{ min: { value: 0, message: 'Calories cannot be negative' } }}
+                className="w-full sm:w-48"
+              />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Calories Burned
-                </label>
-                <input
-                  type="number"
-                  {...register('content.calories_burned', {
-                    min: { value: 0, message: 'Calories cannot be negative' }
-                  })}
-                  className="w-full md:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* Nutritional Information */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-800 mb-3">
                   Nutritional Information (Optional)
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Calories</label>
-                    <input
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {['calories', 'protein', 'carbs', 'fat'].map((field) => (
+                    <InputField
+                      key={field}
+                      label={`${field.charAt(0).toUpperCase() + field.slice(1)} ${
+                        field === 'calories' ? '' : '(g)'
+                      }`}
+                      name={`content.nutritional_info.${field}`}
                       type="number"
-                      {...register('content.nutritional_info.calories')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      min="0"
+                      register={register}
+                      errors={errors}
+                      placeholder="0"
+                      className="w-full"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Protein (g)</label>
-                    <input
-                      type="number"
-                      {...register('content.nutritional_info.protein')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Carbs (g)</label>
-                    <input
-                      type="number"
-                      {...register('content.nutritional_info.carbs')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      min="0"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Fat (g)</label>
-                    <input
-                      type="number"
-                      {...register('content.nutritional_info.fat')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      min="0"
-                    />
-                  </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Privacy */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-800 mb-1.5">
                   Privacy
                 </label>
                 <select
                   {...register('privacy')}
-                  className="w-full md:w-48 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full sm:w-48 px-4 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+                  aria-label="Privacy"
                 >
                   <option value="public">Public</option>
                   <option value="private">Private</option>
@@ -637,35 +632,36 @@ const SessionEditor = () => {
               type="button"
               onClick={handleSubmit(onSaveDraft)}
               disabled={loading}
-              className="flex items-center justify-center px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Save draft"
             >
               {loading ? (
                 <>
-                  <FiLoader className="animate-spin mr-2" />
+                  <FiLoader className="animate-spin mr-2 text-gray-300" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <FiSave className="mr-2" />
+                  <FiSave className="mr-2 text-gray-300" />
                   Save Draft
                 </>
               )}
             </button>
-
             <button
               type="button"
               onClick={handleSubmit(onPublish)}
               disabled={loading}
-              className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-700 to-blue-700 text-white rounded-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              aria-label="Publish session"
             >
               {loading ? (
                 <>
-                  <FiLoader className="animate-spin mr-2" />
+                  <FiLoader className="animate-spin mr-2 text-gray-300" />
                   Publishing...
                 </>
               ) : (
                 <>
-                  <FiSend className="mr-2" />
+                  <FiSend className="mr-2 text-gray-300" />
                   Publish Session
                 </>
               )}

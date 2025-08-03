@@ -14,11 +14,11 @@ import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Sessions from './pages/Sessions.jsx';
-// import SessionDetail from './pages/SessionDetail.jsx';
+import SessionDetail from './pages/SessionDetail.jsx';
 import SessionEditor from './pages/SessionEditor.jsx';
-// import Profile from './pages/Profile.jsx';
+import Profile from './pages/Profile.jsx';
 // import Analytics from './pages/Analytics.jsx';
-// import UserProfile from './pages/UserProfile.jsx';
+import UserProfile from './pages/UserProfile.jsx';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -63,8 +63,8 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/sessions" element={<Sessions />} />
-            {/* <Route path="/sessions/:id" element={<SessionDetail />} /> */}
-            {/* <Route path="/user/:id" element={<UserProfile />} /> */}
+            <Route path="/sessions/:id" element={<SessionDetail />} />
+            <Route path="/user/:id" element={<UserProfile />} />
             
             {/* Auth Routes */}
             <Route 
@@ -93,14 +93,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            {/* <Route 
+            <Route 
               path="/profile" 
               element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
               } 
-            /> */}
+            />
             {/* <Route 
               path="/analytics" 
               element={

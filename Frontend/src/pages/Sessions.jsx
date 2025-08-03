@@ -16,7 +16,7 @@ const Sessions = () => {
     pagination,
     fetchSessions,
     fetchCategories,
-    updateFilters
+    updateFilters,
   } = useSessionStore();
 
   const [searchQuery, setSearchQuery] = useState(filters.search || '');
@@ -57,14 +57,14 @@ const Sessions = () => {
       difficulty: '',
       search: '',
       sort: 'newest',
-      page: 1
+      page: 1,
     });
     fetchSessions({
       category: '',
       difficulty: '',
       search: '',
       sort: 'newest',
-      page: 1
+      page: 1,
     });
   };
 
@@ -72,14 +72,14 @@ const Sessions = () => {
     { value: '', label: 'All Levels' },
     { value: 'beginner', label: 'Beginner' },
     { value: 'intermediate', label: 'Intermediate' },
-    { value: 'advanced', label: 'Advanced' }
+    { value: 'advanced', label: 'Advanced' },
   ];
 
   const sortOptions = [
     { value: 'newest', label: 'Newest First' },
     { value: 'oldest', label: 'Oldest First' },
     { value: 'popular', label: 'Most Popular' },
-    { value: 'duration', label: 'Duration' }
+    { value: 'duration', label: 'Duration' },
   ];
 
   const containerVariants = {
@@ -87,9 +87,9 @@ const Sessions = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -99,23 +99,22 @@ const Sessions = () => {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+        ease: 'easeOut',
+      },
+    },
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Wellness Sessions
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Wellness Sessions</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Discover guided wellness sessions from our community of experts and enthusiasts
           </p>
@@ -126,19 +125,20 @@ const Sessions = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-lg p-6 mb-8"
+          className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-8"
         >
           {/* Search Bar */}
           <div className="relative mb-6">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-gray-400" />
+              <FiSearch className="h-5 w-5 text-gray-700" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="block w-full pl-10 pr-3 py-3 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all duration-200"
               placeholder="Search sessions by title, description, or tags..."
+              aria-label="Search sessions"
             />
           </div>
 
@@ -146,16 +146,16 @@ const Sessions = () => {
           <div className="flex items-center justify-between">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-all duration-200"
+              aria-label="Toggle filters"
             >
-              <FiFilter className="h-4 w-4" />
+              <FiFilter className="h-4 w-4 text-gray-700" />
               <span>Filters</span>
-              <FiChevronDown className={`h-4 w-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              <FiChevronDown
+                className={`h-4 w-4 text-gray-700 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+              />
             </button>
-            
-            <div className="text-sm text-gray-600">
-              {pagination.total_sessions} sessions found
-            </div>
+            <div className="text-sm text-gray-600">{pagination.total_sessions} sessions found</div>
           </div>
 
           {/* Filters */}
@@ -165,18 +165,19 @@ const Sessions = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="border-t border-gray-200 pt-6 mt-6"
+                className="border-t border-gray-500 pt-6 mt-6"
               >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Category Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       Category
                     </label>
                     <select
                       value={filters.category}
                       onChange={(e) => handleFilterChange('category', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+                      aria-label="Category filter"
                     >
                       <option value="">All Categories</option>
                       {categories.map((category) => (
@@ -189,13 +190,14 @@ const Sessions = () => {
 
                   {/* Difficulty Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       Difficulty
                     </label>
                     <select
                       value={filters.difficulty}
                       onChange={(e) => handleFilterChange('difficulty', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+                      aria-label="Difficulty filter"
                     >
                       {difficultyOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -207,13 +209,14 @@ const Sessions = () => {
 
                   {/* Sort Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-800 mb-2">
                       Sort By
                     </label>
                     <select
                       value={filters.sort}
                       onChange={(e) => handleFilterChange('sort', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-3 py-2 border border-gray-500 rounded-lg bg-white/80 backdrop-blur-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 transition-all duration-200"
+                      aria-label="Sort filter"
                     >
                       {sortOptions.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -227,7 +230,8 @@ const Sessions = () => {
                   <div className="flex items-end">
                     <button
                       onClick={clearFilters}
-                      className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="w-full px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-all duration-200"
+                      aria-label="Clear filters"
                     >
                       Clear Filters
                     </button>
@@ -256,45 +260,51 @@ const Sessions = () => {
                 variants={itemVariants}
                 className="group"
               >
-                <Link to={`/sessions/${session._id}`}>
-                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2">
+                <Link to={`/sessions/${session._id}`} aria-label={`View session: ${session.title}`}>
+                  <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2">
                     <div className="relative">
                       <img
-                        src={session.thumbnail || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}
+                        src={
+                          session.thumbnail ||
+                          'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+                        }
                         alt={session.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      
                       {/* Difficulty Badge */}
                       <div className="absolute top-4 left-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          session.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
-                          session.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            session.difficulty === 'beginner'
+                              ? 'bg-green-100 text-green-800'
+                              : session.difficulty === 'intermediate'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
                           {session.difficulty}
                         </span>
                       </div>
-
                       {/* Duration */}
                       <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-lg text-xs font-medium flex items-center space-x-1">
-                        <FiClock className="text-xs" />
+                        <FiClock className="text-xs text-gray-300" />
                         <span>{session.duration} min</span>
                       </div>
-
                       {/* Play Button Overlay */}
                       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                         <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                          <FiPlay className="text-purple-600 text-xl ml-1" />
+                          <FiPlay className="text-indigo-700 text-xl ml-1" />
                         </div>
                       </div>
                     </div>
-                    
                     <div className="p-6">
                       {/* Author */}
                       <div className="flex items-center space-x-2 mb-3">
                         <img
-                          src={session.createdBy?.profile?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}
+                          src={
+                            session.createdBy?.profile?.avatar ||
+                            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+                          }
                           alt={session.createdBy?.username}
                           className="w-6 h-6 rounded-full object-cover"
                         />
@@ -302,50 +312,43 @@ const Sessions = () => {
                           {session.createdBy?.profile?.firstName || session.createdBy?.username}
                         </span>
                       </div>
-
                       {/* Title */}
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-2">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-indigo-700 transition-colors line-clamp-2">
                         {session.title}
                       </h3>
-
                       {/* Description */}
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        {session.description}
-                      </p>
-
+                      <p className="text-gray-600 mb-4 line-clamp-3">{session.description}</p>
                       {/* Tags */}
                       {session.tags && session.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {session.tags.slice(0, 3).map((tag, index) => (
                             <span
                               key={index}
-                              className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                              className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full"
                             >
                               {tag}
                             </span>
                           ))}
                           {session.tags.length > 3 && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-600">
                               +{session.tags.length - 3} more
                             </span>
                           )}
                         </div>
                       )}
-                      
                       {/* Stats */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
                           <div className="flex items-center space-x-1">
-                            <FiHeart className="text-xs" />
+                            <FiHeart className="text-xs text-gray-700" />
                             <span>{session.engagement?.likes_count || 0}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <FiUsers className="text-xs" />
+                            <FiUsers className="text-xs text-gray-700" />
                             <span>{session.engagement?.completions_count || 0}</span>
                           </div>
                         </div>
-                        
-                        <div className="text-purple-600 text-sm font-medium">
+                        <div className="text-indigo-700 text-sm font-medium">
                           Start Session →
                         </div>
                       </div>
@@ -362,17 +365,14 @@ const Sessions = () => {
             className="text-center py-12"
           >
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FiSearch className="text-gray-400 text-2xl" />
+              <FiSearch className="text-gray-700 text-2xl" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No sessions found
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Try adjusting your search criteria or clear the filters
-            </p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No sessions found</h3>
+            <p className="text-gray-600 mb-6">Try adjusting your search criteria or clear the filters</p>
             <button
               onClick={clearFilters}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-6 py-3 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition-all duration-200"
+              aria-label="Clear filters"
             >
               Clear Filters
             </button>
@@ -389,43 +389,42 @@ const Sessions = () => {
             <button
               onClick={() => handlePageChange(pagination.current_page - 1)}
               disabled={!pagination.has_prev}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                 pagination.has_prev
-                  ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-500'
+                  : 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-500'
               }`}
+              aria-label="Previous page"
             >
               Previous
             </button>
-
-            {/* Page Numbers */}
             {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
               const page = Math.max(1, pagination.current_page - 2) + i;
               if (page > pagination.total_pages) return null;
-              
               return (
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                     page === pagination.current_page
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                      ? 'bg-indigo-700 text-white'
+                      : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-500'
                   }`}
+                  aria-label={`Page ${page}`}
                 >
                   {page}
                 </button>
               );
             })}
-
             <button
               onClick={() => handlePageChange(pagination.current_page + 1)}
               disabled={!pagination.has_next}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                 pagination.has_next
-                  ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-500'
+                  : 'bg-gray-100 text-gray-600 cursor-not-allowed border border-gray-500'
               }`}
+              aria-label="Next page"
             >
               Next
             </button>
