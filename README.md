@@ -304,6 +304,22 @@ erDiagram
     ├── 📦 package.json
     └── 🔧 .env.example
 ```
+ ## Technical ExcellenceModular MVC Backend: 
+     - Organized into controllers, models, routes, and middleware for maintainability and scalability.
+     - Robust Authentication: JWT-based with role-based access control, secure cookies, and refresh tokens.
+     - Security Features: Rate limiting, Helmet for secure headers, CORS whitelisting, and input validation.
+     - Optimized Queries: MongoDB aggregations for analytics (e.g., getDashboardAnalytics in analytics.controller.js).
+     - Scalable Frontend: Zustand for lightweight state management, Axios interceptors for error handling, and lazy-loaded routes.
+     - Testing: APIs validated using Postman and ThunderClient; UI tested manually for session flows.
+
+ ## Key Features ImplementationDebounced Auto-save: 
+     - Saves draft sessions (/api/sessions/save-draft) with a 500ms debounce in SessionEditor.jsx.
+     - Toast Notifications: Real-time feedback using react-hot-toast for actions like login, session save, and errors.
+     - Analytics Aggregation: Efficient MongoDB pipelines in analytics.controller.js for user stats, weekly activity, and category insights.
+     - Responsive UI: Mobile-first design with Tailwind CSS, Framer Motion animations, and DaisyUI components.
+     - Social Engagement: Real-time likes, comments, and follows with immediate UI updates via Zustand.
+     - Goals & Streaks: Tracks session completions and streaks in SessionTracking.model.js with dynamic calculations.
+
 
 ---
 
