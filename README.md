@@ -1,6 +1,6 @@
-# Wellness Session Platform
+# 🌿 Wellness Session Platform (WSP)
 
-A **robust, production-ready full-stack wellness platform** designed with advanced features, security, and scalability in mind. This project is ideal as a SaaS foundation for a modern wellness business.
+A robust, full-stack platform for creating, managing, and tracking wellness sessions (e.g., yoga, meditation, fitness). Built with secure JWT authentication, session draft auto-save, analytics dashboards, social engagement features (likes, comments, follows), and a responsive, mobile-first UI.
 
 ---
 
@@ -131,20 +131,79 @@ npm run dev
 
 ## 🏗️ System Architecture
 
+
+```plaintext
+Client (React + Zustand)
+     ↓
+Vite Dev Server (Frontend)
+     ↓
+API Requests (Axios with Interceptors)
+     ↓
+Express.js Backend (Node.js)
+     ↓
+MongoDB Atlas (Database)
+     ↓
+Cloudinary (Media Storage)
+
 ### High-Level Overview
 
+```
+### High-Level Design (HLD)
 ```mermaid
-flowchart LR
-  FE[React Frontend\n(Zustand, Tailwind, Axios)]
-  BE[Express API\n(JWT, Validation, Middleware)]
-  DB[MongoDB Atlas\n(Mongoose ODM)]
-  FE <--> BE <--> DB
-  subgraph Middleware
-    SEC[Helmet, Rate Limit, CORS]
-  end
-  BE -- uses --> SEC
+graph TB
+    A[Client Browser] --> B[React Frontend]
+    B --> C[Express Backend]
+    C --> D[MongoDB Database]
+    C --> E[Cloudinary CDN]
+    C --> F[JWT Auth]
+    
+    subgraph "Frontend"
+        B1[Pages]
+        B2[Components]
+        B3[State Management]
+        B4[API Services]
+    end
+    
+    subgraph "Backend"
+        C1[Controllers]
+        C2[Middleware]
+        C3[Routes]
+        C4[Models]
+    end
+    
+    subgraph "Database"
+        D1[Users]
+        D2[Sessions]
+        D3[Analytics]
+        D4[Comments]
+    end
 ```
 
+### Low-Level Design (LLD)
+```mermaid
+Frontend Architecture:
+├── App.jsx (Router, Auth Guards)
+├── Pages/
+│   ├── Auth (Login/Register)
+│   ├── Dashboard (Analytics)
+│   ├── Sessions (CRUD)
+│   └── Profile (User Management)
+├── Components/
+│   ├── Navbar (Navigation)
+│   └── LoadingSpinner (UI)
+├── Store/
+│   ├── authStore (Zustand)
+│   └── sessionStore (Zustand)
+└── Services/
+    └── api.js (Axios interceptors)
+
+Backend Architecture:
+├── Controllers/ (Business Logic)
+├── Models/ (Mongoose Schemas)
+├── Routes/ (API Endpoints)
+├── Middleware/ (Auth, Validation, Error)
+└── Utils/ (Helpers, Validators)
+```
 ### Data Model Relationships
 
 ```mermaid
@@ -175,27 +234,75 @@ erDiagram
 ## 📁 Project Structure
 
 ```
-Wellness-Session-Platform/
-├── Backend/
-│   └── src/
-│       ├── controllers/
-│       ├── models/
-│       ├── routes/
-│       ├── middlewares/
-│       ├── utils/
-│       ├── db/
-│       ├── app.js
-│       └── index.js
-├── Frontend/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── services/
-│       ├── store/
-│       ├── App.jsx
-│       └── main.jsx
-├── .gitignore
-└── README.md
+🌿 Wellness-Session-Platform/
+├── 📁 Backend/
+│   ├── 📁 src/
+│   │   ├── 🎮 controllers/        # Business logic
+│   │   │   ├── 🔐 auth.controller.js
+│   │   │   ├── 📝 session.controller.js
+│   │   │   ├── 📊 analytics.controller.js
+│   │   │   ├── 👤 user.controller.js
+│   │   │   └── 📋 category.controller.js
+│   │   ├── 📋 models/             # Database schemas
+│   │   │   ├── 👤 User.model.js
+│   │   │   ├── 📝 Session.model.js
+│   │   │   ├── 📈 SessionTracking.model.js
+│   │   │   ├── 📂 Category.model.js
+│   │   │   ├── 💬 Comment.model.js
+│   │   │   ├── ❤️ Like.model.js
+│   │   │   └── 👥 Follow.model.js
+│   │   ├── 🛣️ routes/             # API endpoints
+│   │   │   ├── 🔐 auth.routes.js
+│   │   │   ├── 📝 session.routes.js
+│   │   │   ├── 📊 analytics.routes.js
+│   │   │   ├── 👤 user.routes.js
+│   │   │   ├── 📂 category.routes.js
+│   │   │   └── 📋 index.routes.js
+│   │   ├── 🛡️ middlewares/        # Custom middleware
+│   │   │   ├── 🔐 auth.middleware.js
+│   │   │   ├── ❌ error.middleware.js
+│   │   │   ├── 🚦 rateLimiter.middleware.js
+│   │   │   ├── 📤 upload.middleware.js
+│   │   │   └── ✅ validation.middleware.js
+│   │   ├── 🔧 utils/              # Utilities
+│   │   │   ├── ✅ validators.js
+│   │   │   ├── ❌ ApiError.js
+│   │   │   ├── ✅ ApiResponse.js
+│   │   │   ├── 🔄 asyncHandler.js
+│   │   │   ├── ☁️ cloudinary.js
+│   │   │   └── 🔐 jwt.js
+│   │   ├── 🗄️ db/                 # Database connection
+│   │   │   └── 🔌 index.js
+│   │   ├── 📱 app.js              # Express app setup
+│   │   └── 🚀 index.js            # Server entry point
+│   ├── 📦 package.json
+│   └── 🔧 .env.example
+└── 📁 Frontend/
+    ├── 📁 src/
+    │   ├── 🧩 components/         # Reusable components
+    │   │   ├── 🧭 Navbar.jsx
+    │   │   └── ⏳ LoadingSpinner.jsx
+    │   ├── 📄 pages/              # Page components
+    │   │   ├── 🏠 Home.jsx
+    │   │   ├── 🔐 Login.jsx
+    │   │   ├── 📝 Register.jsx
+    │   │   ├── 📊 Dashboard.jsx
+    │   │   ├── 🧘 Sessions.jsx
+    │   │   ├── 📋 SessionDetail.jsx
+    │   │   ├── ✏️ SessionEditor.jsx
+    │   │   ├── 👤 Profile.jsx
+    │   │   ├── 📈 Analytics.jsx
+    │   │   └── 👥 UserProfile.jsx
+    │   ├── 🏪 store/              # State management
+    │   │   ├── 🔐 authStore.js
+    │   │   └── 📝 sessionStore.js
+    │   ├── 🔌 services/           # API services
+    │   │   └── 📡 api.js
+    │   ├── 📱 App.jsx             # Main app component
+    │   ├── 🚀 main.jsx            # App entry point
+    │   └── 🎨 index.css           # Global styles
+    ├── 📦 package.json
+    └── 🔧 .env.example
 ```
 
 ---
@@ -465,3 +572,64 @@ Wellness-Session-Platform/
 - **Scalable:** microservice-ready, deployable, and maintainable
 
 > **Experience the full platform:** follow the Quick Setup instructions and get started with your wellness journey today!
+
+home
+<img width="1902" height="900" alt="image" src="https://github.com/user-attachments/assets/20747638-54f3-46c0-bc11-97ca2a816285" />
+<img width="1902" height="906" alt="image" src="https://github.com/user-attachments/assets/5f2b8662-13bc-457e-89b9-626a26964a4c" />
+
+sineup
+<img width="1910" height="907" alt="image" src="https://github.com/user-attachments/assets/fa8df38a-d524-4d01-a2d3-0afe98d8f72f" />
+sine in
+<img width="1904" height="904" alt="image" src="https://github.com/user-attachments/assets/494f8f13-d358-4ac6-a142-8b58b63fae44" />
+
+dashboard
+<img width="1907" height="969" alt="image" src="https://github.com/user-attachments/assets/48238949-3b91-4965-b83d-6b762369bc24" />
+<img width="1905" height="714" alt="image" src="https://github.com/user-attachments/assets/bf101106-c450-4820-915f-c80b57e90822" />
+<img width="1902" height="904" alt="image" src="https://github.com/user-attachments/assets/0d3c9717-016b-4e96-aba4-62be6e4fa85c" />
+
+analytics
+<img width="1877" height="991" alt="image" src="https://github.com/user-attachments/assets/b5f72cd7-a295-4dfe-83a2-7319d4a8b0a9" />
+<img width="1903" height="911" alt="image" src="https://github.com/user-attachments/assets/e0eac4f1-4517-4f13-ac1f-ceb1647c8631" />
+<img width="980" height="918" alt="image" src="https://github.com/user-attachments/assets/702f4a00-32fd-453d-89a4-cf15e563d89d" />
+
+<img width="1901" height="893" alt="image" src="https://github.com/user-attachments/assets/3c642267-aea2-44d6-89a2-176d4f404050" />
+<img width="300" height="600" alt="image" src="https://github.com/user-attachments/assets/901c9604-be9c-4cf1-9629-361cfa650913" />
+
+<img width="1357" height="646" alt="image" src="https://github.com/user-attachments/assets/c20a13b2-af9c-4261-98aa-888dff23d467" />
+<img width="342" height="649" alt="image" src="https://github.com/user-attachments/assets/fc2bf6cc-3345-470a-9d3d-5151c1d3e383" />
+<img width="323" height="637" alt="image" src="https://github.com/user-attachments/assets/b111aa34-e396-4f14-bdda-9df601ecd502" />
+
+Create New Session
+<img width="1906" height="896" alt="image" src="https://github.com/user-attachments/assets/be57524d-0284-43d1-b8cc-6f79bbd1b5aa" />
+<img width="1908" height="905" alt="image" src="https://github.com/user-attachments/assets/a2688d47-2f77-437f-bbb7-a739707f36ee" />
+
+<img width="1898" height="903" alt="image" src="https://github.com/user-attachments/assets/fb4878d1-d6af-4470-8448-eb4415c39f1e" />
+<img width="1906" height="901" alt="image" src="https://github.com/user-attachments/assets/b9a8a809-b9b0-40e8-bb1f-068129193cce" />
+<img width="1894" height="883" alt="image" src="https://github.com/user-attachments/assets/28c3733a-5f3f-47b8-beba-430de57165ee" />
+
+<img width="1919" height="897" alt="image" src="https://github.com/user-attachments/assets/951739c6-aaab-4c8d-b87d-9a70c55a09b0" />
+<img width="1898" height="900" alt="image" src="https://github.com/user-attachments/assets/d01f4b3e-4399-41d8-ae61-316f0aae4aa0" />
+<img width="1484" height="112" alt="image" src="https://github.com/user-attachments/assets/f3b9b910-41eb-478b-a52f-4528d61d1757" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
