@@ -106,7 +106,7 @@ export const sessionValidation = {
       .withMessage('isPublished must be true or false')
   ],
   update: [
-    param('id')
+    param('sessionId')
       .isMongoId()
       .withMessage('Invalid session ID'),
     body('title')
@@ -159,7 +159,6 @@ export const sessionValidation = {
 // Comment validation rules
 export const commentValidation = {
   create: [
-
     param('sessionId')
       .isMongoId()
       .withMessage('Invalid session ID'),
@@ -172,14 +171,7 @@ export const commentValidation = {
     body('parentCommentId')
       .optional()
       .isMongoId()
-      .withMessage('Invalid parent comment ID'),
-    body('durationCompleted')
-      .isInt({ min: 1 })
-      .withMessage('Duration completed must be a positive integer'),
-    body('caloriesBurned')
-      .optional()
-      .isInt({ min: 0 })
-      .withMessage('Calories burned must be a non-negative integer'),
+      .withMessage('Invalid parent comment ID')
   ]
 };
 
@@ -198,7 +190,6 @@ export const sessionTrackingValidation = {
       .withMessage('Calories burned must be a non-negative integer')
   ]
 };
-
 
 // Query validation rules
 export const queryValidation = {

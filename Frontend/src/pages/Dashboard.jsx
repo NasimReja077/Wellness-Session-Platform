@@ -348,7 +348,7 @@ const Dashboard = () => {
                             <span>{completion.duration_completed} min</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <FiFire className="text-xs" />
+                            <FaFireFlameCurved className="text-xs" />
                             <span>{completion.calories_burned} cal</span>
                           </div>
                         </div>

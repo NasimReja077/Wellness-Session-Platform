@@ -5,7 +5,7 @@ import { Comment } from '../models/Comment.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-
+import mongoose from 'mongoose';
 
 // Helper function for pagination
 const getPagination = (page, limit) => {
@@ -122,35 +122,42 @@ export const getPublicSessions = asyncHandler(async (req, res) => {
 
 // Get single session by ID
 export const getSessionById = asyncHandler(async (req, res) => {
-     const { id } = req.params;
-     
-     const session = await Session.findById(id)
-     .populate('createdBy', 'username profile.firstName profile.lastName profile.avatar profile.bio')
-     .populate('category_details', 'name');
+  const { sessionId } = req.params; // Changed from id to sessionId
 
-     if (!session) {
-          throw new ApiError(404, 'Session not found')
-     }
-     
-     // Check if session is accessible
-     if (session.status === 'draft' && session.createdBy._id.toString() !== req.user?._id?.toString()) {
-          throw new ApiError(403, 'Access denied');
-     }
+  console.log(`Fetching session with ID: ${sessionId}`); // Debug log
 
-     if (session.privacy === 'private' && session.createdBy._id.toString() !== req.user?._id?.toString()) {
-          throw new ApiError(403, 'Access denied');
-     }
-     
-     // Increment view count if not the owner
-     if (req.user && session.createdBy._id.toString() !== req.user._id.toString() && session.status === 'published') {
-          await Session.incrementViews(req.user._id);
-      }
+  if (!mongoose.isValidObjectId(sessionId)) {
+    console.log(`Invalid ObjectId: ${sessionId}`); // Debug log
+    throw new ApiError(400, 'Invalid session ID format');
+  }
 
-    // Add user interaction data if authenticated
-    let isLiked = false;
-    let userProgress = null;
+  const session = await Session.findById(sessionId) // Changed from id to sessionId
+    .populate('createdBy', 'username profile.firstName profile.lastName profile.avatar profile.bio')
+    .populate('category_details', 'name');
 
-    if (req.user) {
+  if (!session) {
+    console.log(`Session not found for ID: ${sessionId}`); // Debug log
+    throw new ApiError(404, 'Session not found');
+  }
+
+  console.log(`Session found: ${session.title}`); // Debug log
+
+  if (session.status === 'draft' && session.createdBy._id.toString() !== req.user?._id?.toString()) {
+    throw new ApiError(403, 'Access denied');
+  }
+
+  if (session.privacy === 'private' && session.createdBy._id.toString() !== req.user?._id?.toString()) {
+    throw new ApiError(403, 'Access denied');
+  }
+
+  if (req.user && session.createdBy._id.toString() !== req.user._id.toString() && session.status === 'published') {
+    await session.incrementViews(req.user._id);
+  }
+
+  let isLiked = false;
+  let userProgress = null;
+
+  if (req.user) {
     const like = await Like.findOne({
       user: req.user._id,
       session: session._id
@@ -163,14 +170,13 @@ export const getSessionById = asyncHandler(async (req, res) => {
     }).sort({ completed_at: -1 });
   }
 
-    const sessionData = session.toObject();
-    sessionData.isLiked = isLiked;
-    sessionData.userProgress = userProgress;
-    
-    
-    res.status(200).json(
-          new ApiResponse(200, session, 'Session fetched successfully')
-     );
+  const sessionData = session.toObject();
+  sessionData.isLiked = isLiked;
+  sessionData.userProgress = userProgress;
+
+  res.status(200).json(
+    new ApiResponse(200, sessionData, 'Session fetched successfully')
+  );
 });
 
 
@@ -326,67 +332,69 @@ export const publishSession = asyncHandler(async (req, res) => {
 
 // Update session
 export const updateSession = asyncHandler(async (req, res) => {
-  const { id } = req.params
-  const updateData = req.body
+  const { sessionId } = req.params; // Changed from id to sessionId
+  console.log(`Updating session with ID: ${sessionId}`); // Debug log
+  const updateData = req.body;
 
-  const session = await Session.findOne({ _id: id, createdBy: req.user._id })
+  const session = await Session.findOne({ _id: sessionId, createdBy: req.user._id });
 
   if (!session) {
-    throw new ApiError(404, 'Session not found or access denied')
+    throw new ApiError(404, 'Session not found or access denied');
   }
 
-  Object.assign(session, updateData)
-  await session.save()
+  Object.assign(session, updateData);
+  await session.save();
 
   res.status(200).json(
     new ApiResponse(200, session, 'Session updated successfully')
-  )
-})
+  );
+});
 
 
 // Delete session
 export const deleteSession = asyncHandler(async (req, res) => {
-  const { id } = req.params
+  const { sessionId } = req.params; // Changed from id to sessionId
+  console.log(`Deleting session with ID: ${sessionId}`); // Debug log
 
-  const session = await Session.findOne({ _id: id, createdBy: req.user._id })
+  const session = await Session.findOne({ _id: sessionId, createdBy: req.user._id });
 
   if (!session) {
-    throw new ApiError(404, 'Session not found or access denied')
+    throw new ApiError(404, 'Session not found or access denied');
   }
 
-   // Clean up related data
-    await Promise.all([
-      Like.deleteMany({ session: session._id }),
-      Comment.deleteMany({ session: session._id }),
-      SessionTracking.deleteMany({ session: session._id })
-    ]);
+  // Clean up related data
+  await Promise.all([
+    Like.deleteMany({ session: session._id }),
+    Comment.deleteMany({ session: session._id }),
+    SessionTracking.deleteMany({ session: session._id })
+  ]);
 
-  await Session.findByIdAndDelete(id)
+  await Session.findByIdAndDelete(sessionId);
 
   res.status(200).json(
     new ApiResponse(200, {}, 'Session deleted successfully')
-  )
-})
+  );
+});
 
 
 // Like/Unlike session
 export const toggleLike = asyncHandler(async (req, res) => {
-  const { id } = req.params
-
-  const session = await Session.findById(id)
+  const { sessionId } = req.params; // Changed from id to sessionId
+  console.log(`Toggling like for session with ID: ${sessionId}`); // Debug log
+  const session = await Session.findById(sessionId);
 
   if (!session) {
     throw new ApiError(404, 'Session not found');
   }
 
-  const userId = req.user._id
+  const userId = req.user._id;
   const isLiked = session.engagement.likes.includes(userId);
 
   if (isLiked) {
     session.engagement.likes.pull(userId);
     session.engagement.likes_count -= 1;
   } else {
-    session.engagement.likes.push(userId)
+    session.engagement.likes.push(userId);
     session.engagement.likes_count += 1;
   }
   await session.save();

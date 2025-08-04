@@ -10,7 +10,7 @@ const router = Router()
 
 router.get('/', optionalAuth, queryValidation.pagination, queryValidation.sessions, handleValidationErrors, getPublicSessions);
 
-router.get('/:sessionId', optionalAuth, getSessionById)
+router.get('/:sessionId', optionalAuth, getSessionById);
 
 router.get('/my/all', verifyJWT, queryValidation.pagination, handleValidationErrors, getUserSessions);  // Get user's own sessions
 
