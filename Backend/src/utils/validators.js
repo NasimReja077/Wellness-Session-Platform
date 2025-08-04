@@ -1,17 +1,4 @@
-import { body, param, query, validationResult } from 'express-validator';
-
-// Validation middleware to handle errors
-// export const validate = (req, res, next) => {
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({
-//       success: false,
-//       message: 'Validation failed',
-//       errors: errors.array()
-//     });
-//   }
-//   next();
-// };
+import { body, param, query } from 'express-validator';
 
 // User validation rules
 export const userValidation = {
@@ -20,8 +7,8 @@ export const userValidation = {
       .trim()
       .isLength({ min: 3, max: 30 })
       .withMessage('Username must be between 3 and 30 characters')
-      .matches(/^[a-zA-Z0-9_]+$/)
-      .withMessage('Username can only contain letters, numbers, and underscores'),
+      .matches(/^[a-z0-9_]+$/)
+      .withMessage('Username can only contain lowercase letters, numbers, and underscores'),
     body('email')
       .isEmail()
       .normalizeEmail()
@@ -41,10 +28,65 @@ export const userValidation = {
       .trim()
       .isLength({ max: 50 })
       .withMessage('Last name cannot exceed 50 characters'),
+    body('profile.bio')
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage('Bio cannot exceed 500 characters'),
+    body('profile.location')
+      .optional()
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('Location cannot exceed 100 characters'),
+    body('profile.fitnessGoals')
+      .optional()
+      .isArray()
+      .withMessage('Fitness goals must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validGoals = [
+          'weight_loss',
+          'muscle_gain',
+          'flexibility',
+          'endurance',
+          'strength',
+          'stress_relief',
+          'better_sleep',
+          'yoga',
+          'meditation',
+          'fitness',
+          'nutrition',
+          'mindfulness',
+        ];
+        return value.every((goal) => validGoals.includes(goal));
+      })
+      .withMessage('Invalid fitness goals'),
+    body('profile.dietaryPreferences')
+      .optional()
+      .isArray()
+      .withMessage('Dietary preferences must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validPrefs = [
+          'vegetarian',
+          'vegan',
+          'gluten_free',
+          'dairy_free',
+          'keto',
+          'paleo',
+          'mediterranean',
+        ];
+        return value.every((pref) => validPrefs.includes(pref));
+      })
+      .withMessage('Invalid dietary preferences'),
+    body('profile.experienceLevel')
+      .optional()
+      .isIn(['beginner', 'intermediate', 'advanced'])
+      .withMessage('Invalid experience level'),
     body('profile.age')
       .optional()
       .isInt({ min: 13, max: 150 })
-      .withMessage('Age must be between 13 and 120'),
+      .withMessage('Age must be between 13 and 150'),
     body('profile.height')
       .optional()
       .isFloat({ min: 50, max: 300 })
@@ -52,7 +94,11 @@ export const userValidation = {
     body('profile.weight')
       .optional()
       .isFloat({ min: 15, max: 500 })
-      .withMessage('Weight must be between 20kg and 500kg')
+      .withMessage('Weight must be between 15kg and 500kg'),
+    body('profile.avatar')
+      .optional()
+      .isURL()
+      .withMessage('Avatar must be a valid URL'),
   ],
   login: [
     body('email')
@@ -61,8 +107,101 @@ export const userValidation = {
       .withMessage('Please provide a valid email'),
     body('password')
       .notEmpty()
-      .withMessage('Password is required')
-  ]
+      .withMessage('Password is required'),
+  ],
+  updateProfile: [
+    body('profile.firstName')
+      .optional()
+      .trim()
+      .isLength({ max: 50 })
+      .withMessage('First name cannot exceed 50 characters'),
+    body('profile.lastName')
+      .optional()
+      .trim()
+      .isLength({ max: 50 })
+      .withMessage('Last name cannot exceed 50 characters'),
+    body('profile.bio')
+      .optional()
+      .trim()
+      .isLength({ max: 500 })
+      .withMessage('Bio cannot exceed 500 characters'),
+    body('profile.location')
+      .optional()
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('Location cannot exceed 100 characters'),
+    body('profile.fitnessGoals')
+      .optional()
+      .isArray()
+      .withMessage('Fitness goals must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validGoals = [
+          'weight_loss',
+          'muscle_gain',
+          'flexibility',
+          'endurance',
+          'strength',
+          'stress_relief',
+          'better_sleep',
+          'yoga',
+          'meditation',
+          'fitness',
+          'nutrition',
+          'mindfulness',
+        ];
+        return value.every((goal) => validGoals.includes(goal));
+      })
+      .withMessage('Invalid fitness goals'),
+    body('profile.dietaryPreferences')
+      .optional()
+      .isArray()
+      .withMessage('Dietary preferences must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validPrefs = [
+          'vegetarian',
+          'vegan',
+          'gluten_free',
+          'dairy_free',
+          'keto',
+          'paleo',
+          'mediterranean',
+        ];
+        return value.every((pref) => validPrefs.includes(pref));
+      })
+      .withMessage('Invalid dietary preferences'),
+    body('profile.experienceLevel')
+      .optional()
+      .isIn(['beginner', 'intermediate', 'advanced'])
+      .withMessage('Invalid experience level'),
+    body('profile.age')
+      .optional()
+      .isInt({ min: 13, max: 150 })
+      .withMessage('Age must be between 13 and 150'),
+    body('profile.height')
+      .optional()
+      .isFloat({ min: 50, max: 300 })
+      .withMessage('Height must be between 50cm and 300cm'),
+    body('profile.weight')
+      .optional()
+      .isFloat({ min: 15, max: 500 })
+      .withMessage('Weight must be between 15kg and 500kg'),
+    body('profile.avatar')
+      .optional()
+      .isURL()
+      .withMessage('Avatar must be a valid URL'),
+  ],
+  profile: [
+    param('id')
+      .isMongoId()
+      .withMessage('Invalid user ID'),
+  ],
+  follow: [
+    param('id')
+      .isMongoId()
+      .withMessage('Invalid user ID'),
+  ],
 };
 
 // Session validation rules
@@ -79,9 +218,9 @@ export const sessionValidation = {
       .withMessage('Description cannot exceed 100000 characters'),
     body('category')
       .isMongoId()
-      .withMessage('Category must be a valid category ID'),
+      .withMessage('Category must be a valid MongoDB ID'),
     body('difficulty')
-      .optional()
+      .notEmpty()
       .isIn(['beginner', 'intermediate', 'advanced'])
       .withMessage('Invalid difficulty level'),
     body('duration')
@@ -94,16 +233,70 @@ export const sessionValidation = {
     body('tags.*')
       .optional()
       .trim()
-      .isLength({ min: 1, max: 50 })
-      .withMessage('Each tag must be between 1 and 50 characters'),
+      .isLength({ max: 50 })
+      .withMessage('Each tag cannot exceed 50 characters'),
     body('json_file_url')
       .optional()
       .isURL()
       .withMessage('JSON file URL must be a valid URL'),
-    body('isPublished')
+    body('content.instructions')
       .optional()
-      .isBoolean()
-      .withMessage('isPublished must be true or false')
+      .isArray()
+      .withMessage('Instructions must be an array'),
+    body('content.equipment')
+      .optional()
+      .isArray()
+      .withMessage('Equipment must be an array'),
+    body('content.calories_burned')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Calories burned cannot be negative'),
+    body('content.nutritional_info.calories')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional calories cannot be negative'),
+    body('content.nutritional_info.protein')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional protein cannot be negative'),
+    body('content.nutritional_info.carbs')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional carbs cannot be negative'),
+    body('content.nutritional_info.fat')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional fat cannot be negative'),
+    body('content.nutritional_info.fiber')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional fiber cannot be negative'),
+    body('content.nutritional_info.sugar')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional sugar cannot be negative'),
+    body('content.nutritional_info.sodium')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional sodium cannot be negative'),
+    body('content.equipment_needed')
+      .optional()
+      .isArray()
+      .withMessage('Equipment needed must be an array'),
+    body('content.target_muscles')
+      .optional()
+      .isArray()
+      .withMessage('Target muscles must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validMuscles = ['core', 'legs', 'arms', 'back', 'chest', 'shoulders', 'glutes', 'full_body'];
+        return value.every((muscle) => validMuscles.includes(muscle));
+      })
+      .withMessage('Invalid target muscle'),
+    body('privacy')
+      .optional()
+      .isIn(['public', 'private'])
+      .withMessage('Invalid privacy option'),
   ],
   update: [
     param('sessionId')
@@ -113,7 +306,7 @@ export const sessionValidation = {
       .optional()
       .trim()
       .isLength({ min: 3, max: 150 })
-      .withMessage('Title must be between 3 and 100 characters'),
+      .withMessage('Title must be between 3 and 150 characters'),
     body('description')
       .optional()
       .trim()
@@ -122,7 +315,7 @@ export const sessionValidation = {
     body('category')
       .optional()
       .isMongoId()
-      .withMessage('Category must be a valid category ID'),
+      .withMessage('Category must be a valid MongoDB ID'),
     body('difficulty')
       .optional()
       .isIn(['beginner', 'intermediate', 'advanced'])
@@ -138,22 +331,76 @@ export const sessionValidation = {
     body('tags.*')
       .optional()
       .trim()
-      .isLength({ min: 1, max: 50 })
-      .withMessage('Each tag must be between 1 and 50 characters'),
+      .isLength({ max: 50 })
+      .withMessage('Each tag cannot exceed 50 characters'),
     body('json_file_url')
       .optional()
       .isURL()
       .withMessage('JSON file URL must be a valid URL'),
-    body('isPublished')
+    body('content.instructions')
       .optional()
-      .isBoolean()
-      .withMessage('isPublished must be true or false')
+      .isArray()
+      .withMessage('Instructions must be an array'),
+    body('content.equipment')
+      .optional()
+      .isArray()
+      .withMessage('Equipment must be an array'),
+    body('content.calories_burned')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Calories burned cannot be negative'),
+    body('content.nutritional_info.calories')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional calories cannot be negative'),
+    body('content.nutritional_info.protein')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional protein cannot be negative'),
+    body('content.nutritional_info.carbs')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional carbs cannot be negative'),
+    body('content.nutritional_info.fat')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional fat cannot be negative'),
+    body('content.nutritional_info.fiber')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional fiber cannot be negative'),
+    body('content.nutritional_info.sugar')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional sugar cannot be negative'),
+    body('content.nutritional_info.sodium')
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage('Nutritional sodium cannot be negative'),
+    body('content.equipment_needed')
+      .optional()
+      .isArray()
+      .withMessage('Equipment needed must be an array'),
+    body('content.target_muscles')
+      .optional()
+      .isArray()
+      .withMessage('Target muscles must be an array')
+      .custom((value) => {
+        if (!value) return true;
+        const validMuscles = ['core', 'legs', 'arms', 'back', 'chest', 'shoulders', 'glutes', 'full_body'];
+        return value.every((muscle) => validMuscles.includes(muscle));
+      })
+      .withMessage('Invalid target muscle'),
+    body('privacy')
+      .optional()
+      .isIn(['public', 'private'])
+      .withMessage('Invalid privacy option'),
   ],
   publish: [
     body('sessionId')
       .isMongoId()
-      .withMessage('Invalid session ID')
-  ]
+      .withMessage('Invalid session ID'),
+  ],
 };
 
 // Comment validation rules
@@ -171,24 +418,24 @@ export const commentValidation = {
     body('parentCommentId')
       .optional()
       .isMongoId()
-      .withMessage('Invalid parent comment ID')
-  ]
+      .withMessage('Invalid parent comment ID'),
+  ],
 };
 
 // Progress validation rules
 export const sessionTrackingValidation = {
   create: [
-    body('sessionId') // Changed from 'session' to 'sessionId'
+    body('sessionId')
       .isMongoId()
       .withMessage('Invalid session ID'),
-    body('durationCompleted') // Changed from 'duration_completed' to 'durationCompleted'
-      .isInt({ min: 1 }) // Changed to min: 1 to enforce positive duration
+    body('durationCompleted')
+      .isInt({ min: 1 })
       .withMessage('Duration completed must be a positive integer'),
-    body('caloriesBurned') // Changed from 'calories_burned' to 'caloriesBurned'
+    body('caloriesBurned')
       .optional()
       .isInt({ min: 0 })
-      .withMessage('Calories burned must be a non-negative integer')
-  ]
+      .withMessage('Calories burned must be a non-negative integer'),
+  ],
 };
 
 // Query validation rules
@@ -200,30 +447,36 @@ export const queryValidation = {
       .withMessage('Page must be a positive integer'),
     query('limit')
       .optional()
-      .isInt({ min: 1, max: 12 })
-      .withMessage('Limit must be between 1 and 12')
+      .isInt({ min: 1, max: 100 })
+      .withMessage('Limit must be between 1 and 100'),
   ],
   sessions: [
     query('category')
-      .custom(async (value, { req }) => {
-        // Only validate if a category value is provided in the query
-        if (value) {
-          const validCategories = await getValidCategoryNames();
-          if (!validCategories.includes(value)) {
-            throw new Error('Invalid category');
-          }
-        }
-        return true; // Indicate validation success if no value or if value is valid
-      })
-      .withMessage('Invalid category'), // This message will be used if the custom validator throws an error
-    query('difficulty')
       .optional()
-      .isIn(['beginner', 'intermediate', 'advanced'])
+      .isMongoId()
+      .withMessage('Category must be a valid MongoDB ID'),
+    query('difficulty')
+      .optional({ checkFalsy: true })
+      .isIn(['beginner', 'intermediate', 'advanced', ''])
       .withMessage('Invalid difficulty level'),
     query('sort')
       .optional()
-      .isIn(['newest', 'oldest', 'popular'])
-      .withMessage('Invalid sort option')
-  ]
+      .isIn(['newest', 'oldest', 'popular', 'duration'])
+      .withMessage('Invalid sort option'),
+    query('search')
+      .optional()
+      .trim()
+      .escape(),
+    query('tags')
+      .optional()
+      .trim(),
+    query('minDuration')
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage('Minimum duration must be a positive integer'),
+    query('maxDuration')
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage('Maximum duration must be a positive integer'),
+  ],
 };
-      

@@ -3,7 +3,6 @@ import mongoose from 'mongoose'
 const moodBeforeEnum = ['excited', 'motivated', 'neutral', 'tired', 'stressed', 'anxious'];
 const moodAfterEnum = ['energized', 'relaxed', 'accomplished', 'neutral', 'tired', 'frustrated'];
 
-
 const sessionTrackingSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -59,7 +58,6 @@ const sessionTrackingSchema = new mongoose.Schema({
 // Compound indexes for efficient queries and to prevent duplicates
 sessionTrackingSchema.index({ user: 1, session: 1, completed_at: 1 }, { unique: true });
 sessionTrackingSchema.index({ user: 1, completed_at: -1 });
-
 
 // Virtual for session details
 sessionTrackingSchema.virtual('session_info', {

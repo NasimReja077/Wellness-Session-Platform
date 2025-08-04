@@ -1,9 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore.js';
+import { useSessionStore } from '../store/sessionStore.js';
 import { FiMapPin, FiCalendar, FiUsers, FiHeart, FiActivity, FiUserPlus, FiUserCheck } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import api from '../services/api.js';
@@ -12,6 +13,7 @@ import toast from 'react-hot-toast';
 const UserProfile = () => {
   const { id } = useParams();
   const { user: currentUser } = useAuthStore();
+  const { fetchSessionById } = useSessionStore();
   const [profileUser, setProfileUser] = useState(null);
   const [userSessions, setUserSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,43 +24,25 @@ const UserProfile = () => {
     if (id) {
       fetchUserProfile();
       fetchUserSessions();
+    } else {
+      toast.error('Invalid user ID');
+      setLoading(false);
     }
   }, [id]);
 
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      // Mock user data (replace with actual API call: const response = await api.get(`/users/${id}`))
-      const mockUser = {
-        _id: id,
-        username: 'wellness_guru',
-        email: 'guru@wellness.com',
-        profile: {
-          firstName: 'Wellness',
-          lastName: 'Guru',
-          bio: 'Passionate wellness coach helping people transform their lives through mindful practices and healthy habits.',
-          location: 'San Francisco, CA',
-          avatar:
-            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-          fitnessGoals: ['meditation', 'yoga', 'stress_relief'],
-          experienceLevel: 'advanced',
-        },
-        stats: {
-          total_sessions: 45,
-          total_minutes: 1200,
-          streak_days: 15,
-        },
-        followers: [],
-        following: [],
-        createdAt: '2024-01-15T00:00:00.000Z',
-      };
+      const response = await api.get(`/users/${id}`);
+      const { user, isFollowing } = response.data.data;
 
-      setProfileUser(mockUser);
-      setFollowersCount(mockUser.followers?.length || 0);
-      setIsFollowing(currentUser?.following?.includes(id) || false);
+      setProfileUser(user);
+      setFollowersCount(user.followersCount || 0);
+      setIsFollowing(isFollowing || false);
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
-      toast.error('Failed to load user profile');
+      toast.error(error.response?.data?.message || 'Failed to load user profile');
+      setProfileUser(null);
     } finally {
       setLoading(false);
     }
@@ -66,35 +50,13 @@ const UserProfile = () => {
 
   const fetchUserSessions = async () => {
     try {
-      // Mock sessions data (replace with actual API call: const response = await api.get(`/sessions?createdBy=${id}`))
-      const mockSessions = [
-        {
-          _id: '1',
-          title: 'Morning Meditation Flow',
-          description: 'Start your day with mindfulness and intention setting.',
-          difficulty: 'beginner',
-          duration: 15,
-          thumbnail:
-            'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-          engagement: { likes_count: 24, completions_count: 112 },
-          tags: ['meditation', 'morning', 'mindfulness'],
-        },
-        {
-          _id: '2',
-          title: 'Stress Relief Yoga',
-          description: 'Gentle yoga sequence to release tension and find inner peace.',
-          difficulty: 'intermediate',
-          duration: 30,
-          thumbnail:
-            'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-          engagement: { likes_count: 38, completions_count: 87 },
-          tags: ['yoga', 'stress-relief', 'flexibility'],
-        },
-      ];
-
-      setUserSessions(mockSessions);
+      const response = await api.get(`/sessions?createdBy=${id}&status=published&privacy=public&limit=6`);
+      const { sessions } = response.data.data;
+      setUserSessions(sessions);
     } catch (error) {
       console.error('Failed to fetch user sessions:', error);
+      toast.error('Failed to fetch user sessions');
+      setUserSessions([]);
     }
   };
 
@@ -105,16 +67,14 @@ const UserProfile = () => {
     }
 
     try {
-      // Mock API call (replace with: await api.post(`/users/${id}/follow`))
-      setIsFollowing(!isFollowing);
-      setFollowersCount((prev) => (isFollowing ? prev - 1 : prev + 1));
-      toast.success(isFollowing ? 'Unfollowed successfully' : 'Following user');
+      const response = await api.post(`/users/${id}/follow`);
+      const { isFollowing: newIsFollowing, followersCount: newFollowersCount } = response.data.data;
+      setIsFollowing(newIsFollowing);
+      setFollowersCount(newFollowersCount);
+      toast.success(newIsFollowing ? 'Following user' : 'Unfollowed successfully');
     } catch (error) {
       console.error('Failed to toggle follow:', error);
-      toast.error('Failed to update follow status');
-      // Revert optimistic update
-      setIsFollowing(isFollowing);
-      setFollowersCount((prev) => (isFollowing ? prev + 1 : prev - 1));
+      toast.error(error.response?.data?.message || 'Failed to update follow status');
     }
   };
 
@@ -132,6 +92,12 @@ const UserProfile = () => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">User not found</h2>
           <p className="text-gray-600">The user you're looking for doesn't exist.</p>
+          <Link
+            to="/"
+            className="mt-4 inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          >
+            Back to Home
+          </Link>
         </div>
       </div>
     );
@@ -147,25 +113,20 @@ const UserProfile = () => {
           transition={{ duration: 0.5 }}
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg overflow-hidden mb-8"
         >
-          {/* Cover Photo */}
           <div className="h-32 bg-gradient-to-r from-indigo-700 to-blue-700 relative">
             <div className="absolute inset-0 bg-black/20"></div>
           </div>
 
-          {/* Profile Content */}
           <div className="relative px-8 pb-8">
-            {/* Avatar */}
             <div className="flex items-start justify-between -mt-16">
               <img
                 src={
                   profileUser.profile?.avatar ||
-                  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+                  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=799&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
                 }
                 alt={profileUser.username}
                 className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg"
               />
-
-              {/* Follow Button */}
               {currentUser && currentUser._id !== profileUser._id && (
                 <div className="mt-16">
                   <button
@@ -193,7 +154,6 @@ const UserProfile = () => {
               )}
             </div>
 
-            {/* User Info */}
             <div className="mt-6">
               <h1 className="text-3xl font-bold text-gray-900">
                 {profileUser.profile?.firstName && profileUser.profile?.lastName
@@ -206,7 +166,6 @@ const UserProfile = () => {
                 <p className="text-gray-700 mt-3 max-w-2xl">{profileUser.profile.bio}</p>
               )}
 
-              {/* Meta Info */}
               <div className="flex items-center space-x-6 mt-4 text-sm text-gray-600">
                 {profileUser.profile?.location && (
                   <div className="flex items-center space-x-1">
@@ -230,7 +189,6 @@ const UserProfile = () => {
                 </div>
               </div>
 
-              {/* Fitness Goals */}
               {profileUser.profile?.fitnessGoals && profileUser.profile.fitnessGoals.length > 0 && (
                 <div className="mt-4">
                   <div className="flex flex-wrap gap-2">
@@ -300,7 +258,7 @@ const UserProfile = () => {
           transition={{ delay: 0.2 }}
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg"
         >
-          <div className="p-6 border-b border-gray-500">
+          <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
               Sessions by {profileUser.profile?.firstName || profileUser.username}
             </h2>
@@ -315,7 +273,10 @@ const UserProfile = () => {
                     <div className="bg-white/80 backdrop-blur-md rounded-lg p-4 hover:shadow-md hover:bg-gray-50 transition-all duration-200">
                       <div className="flex items-start space-x-4">
                         <img
-                          src={session.thumbnail}
+                          src={
+                            session.thumbnail ||
+                            'https://res.cloudinary.com/wellness-platform/image/upload/v1/default-session.jpg'
+                          }
                           alt={session.title}
                           className="w-16 h-16 rounded-lg object-cover group-hover:scale-105 transition-transform duration-200"
                         />
@@ -353,7 +314,6 @@ const UserProfile = () => {
                             </div>
                           </div>
 
-                          {/* Tags */}
                           {session.tags && session.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {session.tags.slice(0, 3).map((tag, index) => (

@@ -21,6 +21,8 @@ const Home = () => {
   useEffect(() => {
     if (sessions.length > 0) {
       setFeaturedSessions(sessions.slice(0, 6));
+    } else {
+      setFeaturedSessions([]);
     }
   }, [sessions]);
 
@@ -209,6 +211,12 @@ const Home = () => {
             <div className="flex justify-center">
               <LoadingSpinner size="lg" message="Loading featured sessions..." />
             </div>
+          ) : featuredSessions.length === 0 ? (
+            <div className="text-center py-8">
+              <FiStar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 mb-2">No sessions available</h4>
+              <p className="text-gray-600">Check back later for new wellness sessions!</p>
+            </div>
           ) : (
             <motion.div
               variants={containerVariants}
@@ -227,7 +235,7 @@ const Home = () => {
                     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-2">
                       <div className="relative">
                         <img
-                          src={session.thumbnail || 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}
+                          src={session.thumbnail || 'https://images.unsplash.com/photo-1524863479829-916d8e77f114?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'}
                           alt={session.title}
                           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
@@ -237,7 +245,7 @@ const Home = () => {
                             session.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
                             'bg-red-100 text-red-800'
                           }`}>
-                            {session.difficulty}
+                            {session.difficulty || 'Unknown'}
                           </span>
                         </div>
                         <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-lg text-xs font-medium flex items-center space-x-1">

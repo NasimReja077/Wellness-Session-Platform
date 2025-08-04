@@ -1,27 +1,26 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-const categorySchema = new mongoose.Schema({
-   name: {
-    type: String,
-    required: [true, 'Category name is required'],
-    unique: true,
-    trim: true,
-    minlength: [2, 'Category name must be at least 2 characters'],
-    maxlength: [50, 'Category name cannot exceed 50 characters'],
-    match: [/^[a-zA-Z0-9 _-]+$/, 'Category name can only contain letters, numbers, spaces, underscores, and hyphens']
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Category name is required'],
+      unique: true,
+      trim: true,
+      minlength: [2, 'Category name must be at least 2 characters'],
+      maxlength: [50, 'Category name cannot exceed 50 characters'],
+      match: [/^[a-zA-Z0-9 _-]+$/, 'Category name can only contain letters, numbers, spaces, underscores, and hyphens']
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
-}, {
-  timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-})
-
-// Index for fast lookup and uniqueness
-categorySchema.index({ name: 1 }, { unique: true });
-
+);
 
 export const Category = mongoose.model('Category', categorySchema);

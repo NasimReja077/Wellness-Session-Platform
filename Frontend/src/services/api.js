@@ -13,15 +13,17 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Add auth token if available
     const token = localStorage.getItem('token');
     if (token) {
+      console.log(`Setting Authorization header with token: ${token.substring(0, 10)}...`); // Debug log
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log('No token found in localStorage for request:', config.url);
     }
-    
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -32,17 +34,19 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle common errors
+    if (error.code === 'ECONNABORTED') {
+      toast.error('Request timed out. Please try again.');
+      return Promise.reject(error);
+    }
+    
     if (error.response) {
       const { status, data } = error.response;
+      console.log(`Response error [${status}]:`, data); // Debug log
       
       switch (status) {
         case 401:
-          // Unauthorized - clear auth state
           localStorage.removeItem('token');
           delete api.defaults.headers.common['Authorization'];
-          
-          // Only show login required message if not already on login/register page
           if (!window.location.pathname.includes('/login') && 
               !window.location.pathname.includes('/register')) {
             toast.error('Session expired. Please login again.');
@@ -61,7 +65,6 @@ api.interceptors.response.use(
           break;
           
         case 422:
-          // Validation errors
           if (data.errors && Array.isArray(data.errors)) {
             data.errors.forEach(err => {
               toast.error(`${err.field}: ${err.message}`);
@@ -80,17 +83,11 @@ api.interceptors.response.use(
           break;
           
         default:
-          if (data.message) {
-            toast.error(data.message);
-          } else {
-            toast.error('An unexpected error occurred');
-          }
+          toast.error(data.message || 'An unexpected error occurred');
       }
     } else if (error.request) {
-      // Network error
       toast.error('Network error. Please check your connection.');
     } else {
-      // Something else happened
       toast.error('An unexpected error occurred');
     }
     

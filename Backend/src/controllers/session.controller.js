@@ -25,33 +25,32 @@ export const getPublicSessions = asyncHandler(async (req, res) => {
     sort = 'newest',
     tags,
     search,
-//     sortBy = 'createdAt',
-//     sortOrder = 'desc',
     minDuration,
     maxDuration
-  } = req.query
+  } = req.query;
 
   const { skip, limit: limitNum } = getPagination(page, limit);
   // Build filter query
   const filter = { status: 'published', privacy: 'public' };
 
   if (category) {
-    filter.category = category
+    filter.category = category;
   }
 
   if (difficulty) {
-    filter.difficulty = difficulty
+    filter.difficulty = difficulty;
   }
 
   if (minDuration || maxDuration) {
-      filter.duration = {};
-      if (minDuration) filter.duration.$gte = parseInt(minDuration);
-      if (maxDuration) filter.duration.$lte = parseInt(maxDuration);
-    }
-    if (tags) {
-      const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
-      filter.tags = { $in: tagArray };
-    }
+    filter.duration = {};
+    if (minDuration) filter.duration.$gte = parseInt(minDuration);
+    if (maxDuration) filter.duration.$lte = parseInt(maxDuration);
+  }
+
+  if (tags) {
+    const tagArray = tags.split(',').map(tag => tag.trim().toLowerCase());
+    filter.tags = { $in: tagArray };
+  }
 
   if (search) {
     filter.$or = [
@@ -64,20 +63,20 @@ export const getPublicSessions = asyncHandler(async (req, res) => {
   // Build sort object
   let sortOption = {};
   switch (sort) {
-      case 'oldest':
-        sortOption = { createdAt: 1 };
-        break;
-      case 'popular':
-        sortOption = { 'engagement.views_count': -1, 'engagement.likes_count': -1 };
-        break;
-      case 'duration':
-        sortOption = { duration: 1 };
-        break;
-      default:
-        sortOption = { createdAt: -1 };
-    }
-    
-    const sessions = await Session.find(filter)
+    case 'oldest':
+      sortOption = { createdAt: 1 };
+      break;
+    case 'popular':
+      sortOption = { 'engagement.views_count': -1, 'engagement.likes_count': -1 };
+      break;
+    case 'duration':
+      sortOption = { duration: 1 };
+      break;
+    default:
+      sortOption = { createdAt: -1 };
+  }
+
+  const sessions = await Session.find(filter)
     .populate('createdBy', 'username profile.avatar profile.firstName profile.lastName')
     .populate('category_details', 'name')
     .sort(sortOption)
@@ -87,23 +86,23 @@ export const getPublicSessions = asyncHandler(async (req, res) => {
   const total = await Session.countDocuments(filter);
 
   // Add user interaction data if authenticated
-    if (req.user) {
-      const sessionIds = sessions.map(s => s._id);
-      const userLikes = await Like.find({
-        user: req.user.id,
-        sessions: { $in: sessionIds }
-      }).distinct('session');
+  if (req.user) {
+    const sessionIds = sessions.map(s => s._id);
+    const userLikes = await Like.find({
+      user: req.user._id,
+      session: { $in: sessionIds }
+    }).distinct('session');
 
-      const userProgress = await SessionTracking.find({
-        user: req.user.id,
-        session: { $in: sessionIds }
-      }).select('session completed_at');
+    const userProgress = await SessionTracking.find({
+      user: req.user._id,
+      session: { $in: sessionIds }
+    }).select('session completed_at');
 
-      sessions.forEach(session => {
-        session.isLiked = userLikes.some(likeId => likeId.equals(session._id));
-        session.userProgress = userProgress.find(p => p.session.equals(session._id));
-      });
-    }
+    sessions.forEach(session => {
+      session.isLiked = userLikes.some(likeId => likeId.equals(session._id));
+      session.userProgress = userProgress.find(p => p.session.equals(session._id)) || null;
+    });
+  }
 
   res.status(200).json(
     new ApiResponse(200, {
@@ -119,28 +118,27 @@ export const getPublicSessions = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Get single session by ID
 export const getSessionById = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params; // Changed from id to sessionId
+  const { sessionId } = req.params;
 
-  console.log(`Fetching session with ID: ${sessionId}`); // Debug log
+  console.log(`Fetching session with ID: ${sessionId}`);
 
   if (!mongoose.isValidObjectId(sessionId)) {
-    console.log(`Invalid ObjectId: ${sessionId}`); // Debug log
+    console.log(`Invalid ObjectId: ${sessionId}`);
     throw new ApiError(400, 'Invalid session ID format');
   }
 
-  const session = await Session.findById(sessionId) // Changed from id to sessionId
+  const session = await Session.findById(sessionId)
     .populate('createdBy', 'username profile.firstName profile.lastName profile.avatar profile.bio')
     .populate('category_details', 'name');
 
   if (!session) {
-    console.log(`Session not found for ID: ${sessionId}`); // Debug log
+    console.log(`Session not found for ID: ${sessionId}`);
     throw new ApiError(404, 'Session not found');
   }
 
-  console.log(`Session found: ${session.title}`); // Debug log
+  console.log(`Session found: ${session.title}`);
 
   if (session.status === 'draft' && session.createdBy._id.toString() !== req.user?._id?.toString()) {
     throw new ApiError(403, 'Access denied');
@@ -179,29 +177,28 @@ export const getSessionById = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Get user's own sessions
 export const getUserSessions = asyncHandler(async (req, res) => {
-     const { page = 1, limit = 12, status, category } = req.query;
-     const { skip, limit: limitNum } = getPagination(page, limit);
-     const filter = { createdBy: req.user._id };
+  const { page = 1, limit = 12, status, category } = req.query;
+  const { skip, limit: limitNum } = getPagination(page, limit);
+  const filter = { createdBy: req.user._id };
 
   if (status) {
-    filter.status = status
+    filter.status = status;
   }
 
   if (category) {
-    filter.category = category
+    filter.category = category;
   }
   
   const sessions = await Session.find(filter)
-     .populate('createdBy', 'username profile.avatar profile.firstName profile.lastName')
-     .populate('category_details', 'name')
-     .sort({ updatedAt: -1 })
-     .skip(skip)
-     .limit(limitNum);;
+    .populate('createdBy', 'username profile.avatar profile.firstName profile.lastName')
+    .populate('category_details', 'name')
+    .sort({ updatedAt: -1 })
+    .skip(skip)
+    .limit(limitNum);
 
-  const total = await Session.countDocuments(filter)
+  const total = await Session.countDocuments(filter);
 
   res.status(200).json(
     new ApiResponse(200, {
@@ -221,12 +218,6 @@ export const getUserSessions = asyncHandler(async (req, res) => {
 export const saveDraftSession = asyncHandler(async (req, res) => {
   const { sessionId, title, description, category, tags, difficulty, duration, json_file_url, content, privacy } = req.body;
 
-//   // Handle thumbnail upload
-//   let thumbnailUrl = req.file ? (await uploadOnCloudinary(req.file.path))?.secure_url : undefined;
-//   if (req.file && !thumbnailUrl) {
-//     throw new ApiError(500, 'Failed to upload thumbnail');
-//   }
-
   let session;
   if (sessionId) {
     // Update existing draft session
@@ -245,7 +236,6 @@ export const saveDraftSession = asyncHandler(async (req, res) => {
       'content.equipment_needed': content?.equipment_needed,
       'content.target_muscles': content?.target_muscles,
       privacy,
-      // thumbnail: thumbnailUrl,
       updatedAt: Date.now()
     };
     // Remove undefined fields for partial updates
@@ -281,7 +271,6 @@ export const saveDraftSession = asyncHandler(async (req, res) => {
       },
       status: 'draft',
       privacy: privacy || 'public',
-      // thumbnail: thumbnailUrl || 'https://res.cloudinary.com/wellness-platform/image/upload/v1/default-session.jpg'
     });
   }
 
@@ -289,7 +278,6 @@ export const saveDraftSession = asyncHandler(async (req, res) => {
     new ApiResponse(200, session, 'Draft saved successfully')
   );
 });
-
 
 // Publish session
 export const publishSession = asyncHandler(async (req, res) => {
@@ -329,11 +317,10 @@ export const publishSession = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Update session
 export const updateSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params; // Changed from id to sessionId
-  console.log(`Updating session with ID: ${sessionId}`); // Debug log
+  const { sessionId } = req.params;
+  console.log(`Updating session with ID: ${sessionId}`);
   const updateData = req.body;
 
   const session = await Session.findOne({ _id: sessionId, createdBy: req.user._id });
@@ -350,11 +337,10 @@ export const updateSession = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Delete session
 export const deleteSession = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params; // Changed from id to sessionId
-  console.log(`Deleting session with ID: ${sessionId}`); // Debug log
+  const { sessionId } = req.params;
+  console.log(`Deleting session with ID: ${sessionId}`);
 
   const session = await Session.findOne({ _id: sessionId, createdBy: req.user._id });
 
@@ -376,11 +362,10 @@ export const deleteSession = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Like/Unlike session
 export const toggleLike = asyncHandler(async (req, res) => {
-  const { sessionId } = req.params; // Changed from id to sessionId
-  console.log(`Toggling like for session with ID: ${sessionId}`); // Debug log
+  const { sessionId } = req.params;
+  console.log(`Toggling like for session with ID: ${sessionId}`);
   const session = await Session.findById(sessionId);
 
   if (!session) {
@@ -407,9 +392,6 @@ export const toggleLike = asyncHandler(async (req, res) => {
   );
 });
 
-
-
-
 // Add comment to session
 export const addComment = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
@@ -434,7 +416,7 @@ export const addComment = asyncHandler(async (req, res) => {
     session: sessionId,
     user: req.user._id,
     content,
-    parent_comment: parentCommentId || null // Fixed field name
+    parent_comment: parentCommentId || null
   });
 
   const populatedComment = await Comment.findById(comment._id)
@@ -449,37 +431,36 @@ export const addComment = asyncHandler(async (req, res) => {
   );
 });
 
-
 // Get comments for a session
 export const getComments = asyncHandler(async (req, res) => {
   const { sessionId } = req.params;
   const { page = 1, limit = 12 } = req.query;
 
   // Check if session exists
-  const session = await Session.findById(sessionId)
+  const session = await Session.findById(sessionId);
   if (!session) {
-    throw new ApiError(404, 'Session not found')
+    throw new ApiError(404, 'Session not found');
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(limit)
+  const skip = (parseInt(page) - 1) * parseInt(limit);
 
-  // go top-level
+  // Get top-level comments
   const comments = await Comment.find({
     session: sessionId,
-    parent_comment: null // Only top-level comments
+    parent_comment: null
   })
-  .populate('user', 'username profile.firstName profile.lastName profile.avatar')
-  .populate({
-    path: 'replies',
-    populate: {
-      path: 'user',
-      select: 'username profile.firstName profile.lastName profile.avatar'
-    },
-    options: { sort: { createdAt: -1 }, limit: 5} // add limit
-  })
-  .sort({ createdAt: -1 })
-  .skip(skip)
-  .limit(parseInt(limit))
+    .populate('user', 'username profile.firstName profile.lastName profile.avatar')
+    .populate({
+      path: 'replies',
+      populate: {
+        path: 'user',
+        select: 'username profile.firstName profile.lastName profile.avatar'
+      },
+      options: { sort: { createdAt: -1 }, limit: 5 }
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
 
   const total = await Comment.countDocuments({
     session: sessionId,

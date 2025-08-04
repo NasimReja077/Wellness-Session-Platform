@@ -64,9 +64,15 @@ const useSessionStore = create(
         try {
           set({ loading: true });
           
-          const params = new URLSearchParams({
-            ...get().filters,
-            ...filters
+          // Merge provided filters with default filters
+          const mergedFilters = { ...get().filters, ...filters };
+          const params = new URLSearchParams();
+          
+          // Only include non-empty parameters
+          Object.entries(mergedFilters).forEach(([key, value]) => {
+            if (value !== '' && value !== null && value !== undefined) {
+              params.append(key, value);
+            }
           });
 
           const response = await api.get(`/sessions?${params}`);
@@ -75,7 +81,7 @@ const useSessionStore = create(
           set({
             sessions,
             pagination,
-            filters: { ...get().filters, ...filters },
+            filters: mergedFilters,
             loading: false
           });
         } catch (error) {
@@ -108,7 +114,12 @@ const useSessionStore = create(
         try {
           set({ loading: true });
           
-          const params = new URLSearchParams(filters);
+          const params = new URLSearchParams();
+          Object.entries(filters).forEach(([key, value]) => {
+            if (value !== '' && value !== null && value !== undefined) {
+              params.append(key, value);
+            }
+          });
           const response = await api.get(`/sessions/my/all?${params}`);
           const { sessions, pagination } = response.data.data;
 

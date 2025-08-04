@@ -1,11 +1,10 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 // Enum options
 const difficulties = ['beginner', 'intermediate', 'advanced'];
 const privacyOptions = ['public', 'private'];
 const statusOptions = ['draft', 'published'];
 const targetMuscles = ['core', 'legs', 'arms', 'back', 'chest', 'shoulders', 'glutes', 'full_body'];
-
 
 const sessionSchema = new mongoose.Schema({
   title: {
@@ -18,7 +17,7 @@ const sessionSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true,
-    maxlength: [100000, 'description cannot exceed 100000 characters'],
+    maxlength: [100000, 'Description cannot exceed 100000 characters'],
     default: ''
   },
   category: {
@@ -53,7 +52,6 @@ const sessionSchema = new mongoose.Schema({
     ref: 'User',
     required: [true, 'Session creator is required']
   },
-
   content: {
     instructions: [{
       type: String,
@@ -64,24 +62,24 @@ const sessionSchema = new mongoose.Schema({
       trim: true
     }],
     calories_burned: {
-    type: Number,
-    min: [0, 'Calories burned cannot be negative'],
-    default: 0
-  },
-  nutritional_info: {
-    calories: { type: Number, default: 0 },
-    protein: { type: Number, default: 0 },
-    carbs: { type: Number, default: 0 },
-    fat: { type: Number, default: 0 },
-    fiber: { type: Number, default: 0 },
-    sugar: { type: Number, default: 0 },
-    sodium: { type: Number, default: 0 }
-  },
-  equipment_needed: [{
-    type: String,
-    trim: true
-  }],
-  target_muscles: [{
+      type: Number,
+      min: [0, 'Calories burned cannot be negative'],
+      default: 0
+    },
+    nutritional_info: {
+      calories: { type: Number, default: 0 },
+      protein: { type: Number, default: 0 },
+      carbs: { type: Number, default: 0 },
+      fat: { type: Number, default: 0 },
+      fiber: { type: Number, default: 0 },
+      sugar: { type: Number, default: 0 },
+      sodium: { type: Number, default: 0 }
+    },
+    equipment_needed: [{
+      type: String,
+      trim: true
+    }],
+    target_muscles: [{
       type: String,
       enum: targetMuscles
     }]
@@ -103,23 +101,21 @@ const sessionSchema = new mongoose.Schema({
   engagement: {
     views: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'User'
     }],
     likes: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Like',
+      ref: 'Like'
     }],
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment',
-      }
-    ],
+    comments: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment'
+    }],
     likes_count: { type: Number, default: 0 },
     comments_count: { type: Number, default: 0 },
     shares_count: { type: Number, default: 0 },
     views_count: { type: Number, default: 0 },
-    completions_count: { type: Number, default: 0 },
+    completions_count: { type: Number, default: 0 }
   },
   published_at: {
     type: Date,
@@ -136,16 +132,12 @@ const sessionSchema = new mongoose.Schema({
 });
 
 // Index for better query performance
-// sessionSchema.index({ title: 'text' });
-sessionSchema.index({ title: 'text', description: 'text' });
-sessionSchema.index({ tags: 1 });
-sessionSchema.index({ 'content.target_muscles': 1 });
-sessionSchema.index({ createdBy: 1, status: 1 })
-sessionSchema.index({ category: 1, status: 1 })
-sessionSchema.index({ createdAt: -1 })
+sessionSchema.index({ title: 'text', description: 'text', tags: 'text' });
+sessionSchema.index({ createdBy: 1, status: 1 });
+sessionSchema.index({ category: 1, status: 1 });
+sessionSchema.index({ createdAt: -1 });
 sessionSchema.index({ difficulty: 1 });
 sessionSchema.index({ 'engagement.views_count': -1 });
-
 
 // Virtual fields
 sessionSchema.virtual('author', {
@@ -155,7 +147,6 @@ sessionSchema.virtual('author', {
   justOne: true
 });
 
-// Virtual for populated category
 sessionSchema.virtual('category_details', {
   ref: 'Category',
   localField: 'category',

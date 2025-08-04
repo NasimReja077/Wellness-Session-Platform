@@ -1,48 +1,65 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { FiTrendingUp, FiActivity, FiClock, FiFire, FiUsers, FiHeart, FiCalendar, FiTarget } from 'react-icons/fi';
+import { FiTrendingUp, FiActivity, FiClock, FiStar, FiCalendar, FiTarget } from 'react-icons/fi'; // Changed FiFlame to FiStar
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { toast } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import api from '../services/api.js';
+import { useAuthStore } from '../store/authStore.js';
 
 const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('week');
+  const { user, loading: authLoading } = useAuthStore();
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [timeRange]);
+  const fetchAnalytics = useCallback(async () => {
+    if (!user || authLoading) {
+      console.log('Waiting for authentication to complete');
+      return;
+    }
 
-  const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/analytics/dashboard');
+      const response = await api.get(`/analytics/dashboard?timeRange=${timeRange}`);
+      console.log('Analytics API response:', JSON.stringify(response.data, null, 2)); // Detailed debug log
+      if (!response.data?.data) {
+        throw new Error('Invalid response structure: Missing data field');
+      }
       setAnalytics(response.data.data);
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
+      const message = error.response?.data?.message || error.message || 'Failed to load analytics data';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange, user, authLoading]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const formatChartData = (weeklyData) => {
-    if (!weeklyData || weeklyData.length === 0) return [];
+    if (!weeklyData || !Array.isArray(weeklyData) || weeklyData.length === 0) {
+      console.log('No weekly data available');
+      return [];
+    }
     
     return weeklyData.map(day => ({
-      date: new Date(day._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      sessions: day.sessions,
-      minutes: day.minutes,
-      calories: day.calories
+      date: day._id ? new Date(day._id).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown',
+      sessions: day.sessions || 0,
+      minutes: day.minutes || 0,
+      calories: day.calories || 0
     }));
   };
 
   const categoryData = analytics?.category_stats?.map(cat => ({
-    name: cat._id,
-    sessions: cat.count,
-    minutes: cat.totalMinutes,
-    calories: cat.totalCalories
+    name: cat._id || 'Unknown',
+    sessions: cat.count || 0,
+    minutes: cat.totalMinutes || 0,
+    calories: cat.totalCalories || 0
   })) || [];
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
@@ -64,12 +81,12 @@ const Analytics = () => {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
+        ease: 'easeOut'
       }
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <LoadingSpinner size="lg" message="Loading analytics..." />
@@ -160,7 +177,7 @@ const Analytics = () => {
                   <p className="text-sm text-orange-600 mt-1">🔥 Keep it going!</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <FiFire className="text-green-600 text-xl" />
+                  <FiStar className="text-green-600 text-xl" /> {/* Changed FiFlame to FiStar */}
                 </div>
               </div>
             </motion.div>
@@ -170,7 +187,7 @@ const Analytics = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">This Week</p>
                   <p className="text-3xl font-bold text-red-600">
-                    {analytics?.weekly_activity?.reduce((sum, day) => sum + day.sessions, 0) || 0}
+                    {analytics?.weekly_activity?.reduce((sum, day) => sum + (day.sessions || 0), 0) || 0}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Sessions completed</p>
                 </div>
@@ -199,44 +216,40 @@ const Analytics = () => {
                 </div>
               </div>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={formatChartData(analytics?.weekly_activity)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="sessions" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#8b5cf6' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="minutes" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      dot={{ fill: '#3b82f6' }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {analytics?.weekly_activity?.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={formatChartData(analytics.weekly_activity)}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="sessions" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6' }} />
+                      <Line type="monotone" dataKey="minutes" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-600">No activity data available</div>
+                )}
               </div>
             </motion.div>
 
-            {/* Category Performance */}            
+            {/* Category Performance */}
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Category Performance</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={categoryData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="sessions" fill="#8b5cf6" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={categoryData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="sessions" fill="#8b5cf6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-600">No category data available</div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -247,25 +260,29 @@ const Analytics = () => {
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Session Distribution</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="sessions"
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {categoryData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="sessions"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-8 text-gray-600">No session distribution data available</div>
+                )}
               </div>
             </motion.div>
 
@@ -276,33 +293,57 @@ const Analytics = () => {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Sessions Goal</span>
-                    <span className="text-sm text-gray-600">5/7</span>
+                    <span className="text-sm text-gray-600">
+                      {analytics?.goals?.sessions?.current || 0}/{analytics?.goals?.sessions?.target || 7}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: '71%' }}></div>
+                    <div
+                      className="bg-purple-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          ((analytics?.goals?.sessions?.current || 0) / (analytics?.goals?.sessions?.target || 7)) * 100
+                        }%`
+                      }}
+                    ></div>
                   </div>
                 </div>
-
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Minutes Goal</span>
-                    <span className="text-sm text-gray-600">180/300</span>
+                    <span className="text-sm text-gray-600">
+                      {analytics?.goals?.minutes?.current || 0}/{analytics?.goals?.minutes?.target || 300}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: '60%' }}></div>
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          ((analytics?.goals?.minutes?.current || 0) / (analytics?.goals?.minutes?.target || 300)) * 100
+                        }%`
+                      }}
+                    ></div>
                   </div>
                 </div>
-
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Streak Goal</span>
-                    <span className="text-sm text-gray-600">7/10</span>
+                    <span className="text-sm text-gray-600">
+                      {analytics?.goals?.streak?.current || 0}/{analytics?.goals?.streak?.target || 10}
+                    </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: '70%' }}></div>
+                    <div
+                      className="bg-green-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          ((analytics?.goals?.streak?.current || 0) / (analytics?.goals?.streak?.target || 10)) * 100
+                        }%`
+                      }}
+                    ></div>
                   </div>
                 </div>
-
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex items-center space-x-2 text-sm text-green-600">
                     <FiTarget className="w-4 h-4" />
@@ -316,16 +357,16 @@ const Analytics = () => {
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-lg">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Achievements</h3>
               <div className="space-y-4">
+                {/* Hardcoded for now; consider fetching from /analytics/achievements */}
                 <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
                   <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                    <FiFire className="text-white text-sm" />
+                    <FiStar className="text-white text-sm" /> {/* Changed FiFlame to FiStar */}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">7-Day Streak</h4>
                     <p className="text-sm text-gray-600">Completed sessions for 7 days in a row</p>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
                   <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                     <FiActivity className="text-white text-sm" />
@@ -335,10 +376,9 @@ const Analytics = () => {
                     <p className="text-sm text-gray-600">Reached 100 total minutes this week</p>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
                   <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                    <FiHeart className="text-white text-sm" />
+                    <FiStar className="text-white text-sm" /> {/* Changed FiFlame to FiStar */}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">First Session</h4>
@@ -365,21 +405,21 @@ const Analytics = () => {
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {completion.session?.title || 'Unknown Session'}
+                            {completion.session?.title || 'Untitled Session'}
                           </h4>
                           <p className="text-sm text-gray-600">
                             Completed {new Date(completion.completed_at).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
                         <div className="flex items-center space-x-1">
                           <FiClock className="text-xs" />
-                          <span>{completion.duration_completed} min</span>
+                          <span>{completion.duration_completed || 0} min</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <FiFire className="text-xs" />
-                          <span>{completion.calories_burned} cal</span>
+                          <FiStar className="text-xs" /> {/* Changed FiFlame to FiStar */}
+                          <span>{completion.calories_burned || 0} cal</span>
                         </div>
                       </div>
                     </div>

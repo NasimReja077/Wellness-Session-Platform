@@ -17,7 +17,7 @@ import Sessions from './pages/Sessions.jsx';
 import SessionDetail from './pages/SessionDetail.jsx';
 import SessionEditor from './pages/SessionEditor.jsx';
 import Profile from './pages/Profile.jsx';
-// import Analytics from './pages/Analytics.jsx';
+import Analytics from './pages/Analytics.jsx';
 import UserProfile from './pages/UserProfile.jsx';
 
 // Protected Route Component
@@ -101,14 +101,14 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            {/* <Route 
+            <Route 
               path="/analytics" 
               element={
                 <ProtectedRoute>
                   <Analytics />
                 </ProtectedRoute>
               } 
-            /> */}
+            />
             <Route 
               path="/session/new" 
               element={
