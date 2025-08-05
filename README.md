@@ -233,7 +233,7 @@ erDiagram
 
 ## 📁 Project Structure
 
-```
+```mermaid
 🌿 Wellness-Session-Platform/
 ├── 📁 Backend/
 │   ├── 📁 src/
@@ -313,14 +313,12 @@ erDiagram
      - Testing: APIs validated using Postman and ThunderClient; UI tested manually for session flows.
 
  ## Key Features ImplementationDebounced Auto-save: 
-     - Saves draft sessions (/api/sessions/save-draft) with a 500ms debounce in SessionEditor.jsx.
-     - Toast Notifications: Real-time feedback using react-hot-toast for actions like login, session save, and errors.
-     - Analytics Aggregation: Efficient MongoDB pipelines in analytics.controller.js for user stats, weekly activity, and category insights.
-     - Responsive UI: Mobile-first design with Tailwind CSS, Framer Motion animations, and DaisyUI components.
-     - Social Engagement: Real-time likes, comments, and follows with immediate UI updates via Zustand.
-     - Goals & Streaks: Tracks session completions and streaks in SessionTracking.model.js with dynamic calculations.
-
-
+    - Saves draft sessions (/api/sessions/save-draft) with a 500ms debounce in SessionEditor.jsx.
+    -  Toast Notifications: Real-time feedback using react-hot-toast for actions like login, session save, and errors.
+    -   Analytics Aggregation: Efficient MongoDB pipelines in analytics.controller.js for user stats, weekly activity, and category insights.
+    - Responsive UI: Mobile-first design with Tailwind CSS, Framer Motion animations, and DaisyUI components.
+    - Social Engagement: Real-time likes, comments, and follows with immediate UI updates via Zustand.
+    - Goals & Streaks: Tracks session completions and streaks in SessionTracking.model.js with dynamic calculations.
 ---
 
 ## 📚 API Documentation
@@ -626,26 +624,3 @@ Create New Session
 <img width="1919" height="897" alt="image" src="https://github.com/user-attachments/assets/951739c6-aaab-4c8d-b87d-9a70c55a09b0" />
 <img width="1898" height="900" alt="image" src="https://github.com/user-attachments/assets/d01f4b3e-4399-41d8-ae61-316f0aae4aa0" />
 <img width="1484" height="112" alt="image" src="https://github.com/user-attachments/assets/f3b9b910-41eb-478b-a52f-4528d61d1757" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
