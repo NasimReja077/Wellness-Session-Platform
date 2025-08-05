@@ -10,7 +10,7 @@ const createRateLimitError = (message, retryAfter) => ({
 // Auth rate limiter
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 15,
   message: async (req) => createRateLimitError(
     'Too many authentication attempts, please try again later.',
     Math.round(req.rateLimit.resetTime / 1000)
@@ -34,7 +34,7 @@ export const apiLimiter = rateLimit({
 // Session creation rate limiter
 export const createSessionLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10,
+  max: 20,
   message: async (req) => createRateLimitError(
     'Too many session creation requests, please try again later.',
     Math.round(req.rateLimit.resetTime / 1000)
