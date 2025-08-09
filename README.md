@@ -1,5 +1,5 @@
 # 🌿 Wellness Session Platform (WSP)
-
+# Live Link: https://wellness-frontend-jzhx.onrender.com/
 A robust, full-stack platform for creating, managing, and tracking wellness sessions (e.g., yoga, meditation, fitness). Built with secure JWT authentication, session draft auto-save, analytics dashboards, social engagement features (likes, comments, follows), and a responsive, mobile-first UI.
 
 ---
